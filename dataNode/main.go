@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/MiguelCock/HDFS/dataNode/DN"
 )
@@ -9,6 +10,8 @@ import (
 func main() {
 	fmt.Printf("STARTING SERVER")
 
-	dn := DN.NewDataNode()
-	dn.StartRest()
+	dn := DN.NewDataNode("bootstrap.json")
+	if err := dn.StartRest(); err != nil {
+		log.Fatal(err)
+	}
 }

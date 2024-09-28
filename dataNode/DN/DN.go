@@ -2,12 +2,13 @@ package DN
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -17,18 +18,67 @@ type FileMetadata struct {
 }
 
 type DataNode struct {
-	Files map[string]FileMetadata
+	IP                 string `json:"own_ip"`
+	Port               int    `json:"own_port"`
+	NameNodeIP         string `json:"namenode_ip"`
+	NameNodePort       int    `json:"namenode_port"`
+	BlockSize          int    `json:"block_size"`
+	HeartbeatInterval  int    `json:"heartbeat_interval"`
+	BlockCheckInterval int    `json:"block_check_interval"`
+	Files              map[string]FileMetadata
 }
 
-// =============== REST ===============
-func NewDataNode() *DataNode {
-	return &DataNode{
-		Files: make(map[string]FileMetadata),
-	}
+// ---------- CRETATE NEW DATA NODE ----------
+func NewDataNode(filename string) *DataNode {
+	var dn DataNode
+
+	file, _ := os.Open(filename)
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+
+	decoder.Decode(&dn)
+
+	dn.Files = make(map[string]FileMetadata)
+
+	return &dn
 }
+
+// ---------- REGISTER THE DATA NODE TO THE NAME NODE ----------
+func (dn *DataNode) Register() error {
+	url := fmt.Sprintf("http://%s:%d/register_datanode", dn.NameNodeIP, dn.NameNodePort)
+	body := map[string]interface{}{
+		"datanode_ip":   dn.IP,
+		"datanode_port": dn.Port,
+	}
+	jsonData, _ := json.Marshal(body)
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(jsonData))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("error al registrar DataNode")
+	}
+
+	data, _ := io.ReadAll(resp.Body)
+	var response map[string]interface{}
+	json.Unmarshal(data, &response)
+
+	dn.BlockSize = int(response["block_size"].(float64))
+	dn.HeartbeatInterval = int(response["heartbeat_interval"].(float64))
+	dn.BlockCheckInterval = int(response["block_report_interval"].(float64))
+
+	log.Println("DataNode registrado correctamente con el NameNode.")
+	return nil
+}
+
+// ============================== REST ==============================
 
 // ---------- DELETE BLOCK ----------
-func (n *DataNode) DeleteBlock(w http.ResponseWriter, r *http.Request) {
+func (dn *DataNode) DeleteBlock(w http.ResponseWriter, r *http.Request) {
 	filePath := strings.TrimPrefix(r.URL.Path, "/delete/")
 
 	if filePath == "" {
@@ -36,113 +86,75 @@ func (n *DataNode) DeleteBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, exist := n.Files[filePath]; !exist {
+	if _, exist := dn.Files[filePath]; !exist {
 		http.Error(w, "File Not found", http.StatusNotFound)
 		return
 	}
 
 	os.Remove(filePath)
 
-	delete(n.Files, filePath)
+	delete(dn.Files, filePath)
 
 	w.WriteHeader(http.StatusOK)
 }
 
-// ---------- REPLICATE BLOCK ----------
-func (n *DataNode) ReplicatetBlock(w http.ResponseWriter, r *http.Request) {
-}
-
 // ---------- BLOCK REPORT ----------
-func (n *DataNode) BlockReport() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	ticker := time.NewTicker(5 * time.Second)
+func (dn *DataNode) BlockReport() {
+	ticker := time.NewTicker(time.Duration(dn.BlockCheckInterval) * time.Second)
 	defer ticker.Stop()
+	url := fmt.Sprintf("http://%s:%d/blockReport", dn.NameNodeIP, dn.NameNodePort)
 
-	go func() {
-		for range ticker.C {
+	body := map[string]interface{}{
+		"datanode_id":   dn.IP,
+		"block_list":    []string{"block1", "block2"}, // Aquí puedes agregar la lógica real
+		"checksum_list": []string{"checksum1", "checksum2"},
+	}
+	jsonData, _ := json.Marshal(body)
 
-			url := "http://localhost:8080"
+	resp, err := http.Post(url, "aplication/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Failed to send heartbeat request: %v", err)
+	}
 
-			data := []byte(`{"status":"alive"`)
+	log.Printf("Response Status: %s\n", resp.Status)
 
-			resp, err := http.Post(url, "/blockReport", bytes.NewBuffer(data))
-			if err != nil {
-				log.Printf("Failed to send heartbeat request: %v", err)
-			}
+	resp.Body.Close()
 
-			log.Printf("Response Status: %s\n", resp.Status)
-
-			resp.Body.Close()
-		}
-	}()
-
-	<-sigs
 }
 
 // ---------- HEART BEAT ----------
-func (n *DataNode) HeartBeat() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	ticker := time.NewTicker(5 * time.Second)
+func (dn *DataNode) HeartBeat() {
+	ticker := time.NewTicker(time.Duration(dn.HeartbeatInterval) * time.Second)
 	defer ticker.Stop()
 
-	go func() {
-		for range ticker.C {
+	url := fmt.Sprintf("http://%s:%d/heartbeat", dn.NameNodeIP, dn.NameNodePort)
 
-			url := "http://localhost:8080"
+	body := map[string]interface{}{
+		"datanode_id": dn.IP,
+	}
+	jsonData, _ := json.Marshal(body)
 
-			data := []byte(`{"status":"alive"`)
+	resp, err := http.Post(url, "aplication/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Failed to send heartbeat request: %v", err)
+	}
 
-			resp, err := http.Post(url, "/heartbeat", bytes.NewBuffer(data))
-			if err != nil {
-				log.Printf("Failed to send heartbeat request: %v", err)
-			}
+	log.Printf("Response Status: %s\n", resp.Status)
 
-			log.Printf("Response Status: %s\n", resp.Status)
-
-			resp.Body.Close()
-		}
-	}()
-
-	<-sigs
+	resp.Body.Close()
 }
 
 // ---------- CHECK SUM ----------
-func (n *DataNode) CheckSumVerification() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	go func() {
-		for range ticker.C {
-
-			url := "http://localhost:8080"
-
-			data := []byte(`{"status":"alive"`)
-
-			resp, err := http.Post(url, "/checksum", bytes.NewBuffer(data))
-			if err != nil {
-				log.Printf("Failed to send heartbeat request: %v", err)
-			}
-
-			log.Printf("Response Status: %s\n", resp.Status)
-
-			resp.Body.Close()
-		}
-	}()
-
-	<-sigs
-}
+func (dn *DataNode) CheckSumVerification() {}
 
 // ---------- START REST SERVER ----------
-func (n *DataNode) StartRest() {
-	n.HeartBeat()
-	n.BlockReport()
+func (n *DataNode) StartRest() error {
+	if err := n.Register(); err != nil {
+		return err
+	}
+
+	go n.HeartBeat()
+	go n.BlockReport()
 	n.CheckSumVerification()
 
 	http.HandleFunc("/deleteBlock/", n.DeleteBlock)
@@ -150,9 +162,15 @@ func (n *DataNode) StartRest() {
 
 	log.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	return nil
 }
 
-// =============== GRPC ==============
+// ---------- REPLICATE BLOCK ----------
+func (dn *DataNode) ReplicatetBlock(w http.ResponseWriter, r *http.Request) {
+}
+
+// ============================== GRPC =============================
 func (n *DataNode) SaveBlock() {
 }
 
