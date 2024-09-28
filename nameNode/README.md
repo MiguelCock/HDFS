@@ -12,10 +12,14 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Es llamado por**: **Client**, cuando el usuario desea crear un archivo.
    - **Parámetros**:
      - `path` (string): La ruta completa del archivo.
+     - `token` (string): Token de autenticación.
    - **Retorno**:
-     - JSON indicando éxito o error:
+     - JSON con la lista de ips y puertos de los **DataNodes** al que **Client** debe mandarle los bloques del archivo:
        ```json
-       {"status": "Archivo creado exitosamente"}
+       {"blocks": [
+         {"block_id": "block1", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_id": "block2", "datanode": {"ip": "ip2", "port": 5001}}
+       ]}
        ```
 
 2. **/delete_file**
@@ -24,6 +28,7 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Es llamado por**: **Client**, cuando el usuario desea eliminar un archivo.
    - **Parámetros**:
      - `path` (string): La ruta completa del archivo que se va a eliminar.
+     - `token` (string): Token de autenticación.
    - **Retorno**:
      - JSON indicando éxito o error:
        ```json
@@ -36,6 +41,7 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Es llamado por**: **Client**, cuando el usuario desea crear un directorio.
    - **Parámetros**:
      - `path` (string): La ruta completa del directorio que se va a crear.
+     - `token` (string): Token de autenticación.
    - **Retorno**:
      - JSON indicando éxito o error:
        ```json
@@ -48,6 +54,7 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Es llamado por**: **Client**, cuando el usuario desea eliminar un directorio.
    - **Parámetros**:
      - `path` (string): La ruta completa del directorio que se va a eliminar.
+     - `token` (string): Token de autenticación.
    - **Retorno**:
      - JSON indicando éxito o error:
        ```json
@@ -60,6 +67,7 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Es llamado por**: **Client**, cuando el usuario desea listar los contenidos de un directorio.
    - **Parámetros**:
      - `path` (string): La ruta completa del directorio.
+     - `token` (string): Token de autenticación.
    - **Retorno**:
      - JSON con la lista de archivos y directorios:
        ```json
@@ -72,14 +80,78 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Es llamado por**: **Client**, cuando necesita leer un archivo y saber en qué **DataNodes** se encuentran los bloques.
    - **Parámetros**:
      - `path` (string): La ruta completa del archivo.
+     - `token` (string): Token de autenticación.
    - **Retorno**:
-     - JSON con la lista de **DataNodes** donde se encuentran los bloques del archivo:
+     - JSON con la lista de **DataNodes** (y su info) donde se encuentran los bloques del archivo:
        ```json
        {"blocks": [
-         {"block_id": "block1", "datanodes": ["datanode1", "datanode2"]},
-         {"block_id": "block2", "datanodes": ["datanode3", "datanode4"]}
+         {"block_id": "block1", "datanodes": [{"ip": "ip1", "port": 5001}, {"ip": "ip2", "port": 5001}]},
+         {"block_id": "block2", "datanodes": [{"ip": "ip3", "port": 5001}, {"ip": "ip4", "port": 5001}]}
        ]}
        ```
+
+7. **/block_report**
+   - **Método**: `POST`
+   - **Descripción**: Envía un informe al **NameNode** con los bloques almacenados en este **DataNode**.
+   - **Es llamado por**: **DataNode** mismo (periódicamente).
+   - **Parámetros**:
+     - `datanode_id` (string): El identificador de ese **DataNode**.
+     - `block_list` (list): Lista de los bloques almacenados en el **DataNode**.
+     - `checksum_list` (list): Lista de checksums de los bloques para verificar la integridad.
+   - **Retorno**:
+     - Ninguno.
+
+8. **/heartbeat**
+   - **Método**: `POST`
+   - **Descripción**: **DataNode** envía un heartbeat para informar que este sigue operativo.
+   - **Es llamado por**: **DataNode** mismo (periódicamente).
+   - **Parámetros**:
+     - `datanode_id` (string): El identificador de ese **DataNode**.
+   - **Retorno**:
+     - Ninguno.
+
+9. **/register_datanode**
+   - **Método**: `POST`
+   - **Descripción**: Registra el **DataNode** cuando se inicia, para recibir el tamaño de bloque y los retrasos para heartbeats y block reports.
+   - **Es llamado por**: **DataNode** mismo al iniciarse.
+   - **Parámetros**:
+     - `datanode_ip` (string): La IP del **DataNode**.
+     - `datanode_port` (int): El puerto del **DataNode**.
+   - **Retorno**:
+     - JSON con el tamaño de bloque y los tiempos de intervalo:
+       ```json
+       {
+         "block_size": 1048576,
+         "heartbeat_interval": 5,
+         "block_report_interval": 10
+       }
+       ```
+
+10. **/register_client**
+    - **Método**: `POST`
+    - **Descripción**: Registra un nuevo cliente en el sistema.
+    - **Es llamado por**: **Client** al iniciar sesión.
+    - **Parámetros**:
+      - `username` (string): El nombre de usuario del cliente.
+      - `password` (string): La contraseña del cliente.
+    - **Retorno**:
+      - JSON con el token de autenticación:
+        ```json
+        {"message": "Cliente registrado exitosamente"}
+        ```
+
+11. **/login**
+    - **Método**: `POST`
+    - **Descripción**: Inicia sesión de un cliente en el sistema.
+    - **Es llamado por**: **Client** al iniciar sesión.
+    - **Parámetros**:
+      - `username` (string): El nombre de usuario del cliente.
+      - `password` (string): La contraseña del cliente.
+    - **Retorno**:
+      - JSON con el token de autenticación:
+        ```json
+        {"message": "Inicio de sesión exitoso", "token": "jwt_token", "block_size": 1048576}
+        ```
 
 ---
 
@@ -91,14 +163,17 @@ El **NameNode** no tiene funciones gRPC ejecutables por otros nodos. Toda la int
 
 ### **Funciones propias del NameNode que llaman a otros nodos**
 
-1. **Receive Block Report**
-   - **Descripción**: Recibe un informe de los bloques almacenados en un **DataNode**.
+1. **Delete Block**
+   - **Descripción**: Cuando un archivo se elimina, el **NameNode** ordena a los **DataNodes** que eliminen los bloques correspondientes.
    - **Llama a**:
-     - **DataNode** a través del endpoint `/block_report` (API REST), cuando un **DataNode** informa sobre los bloques que está almacenando.
+     - **DataNode** a través del endpoint `/delete_block` (API REST), para eliminar un bloque.
    - **Parámetros**:
-     - `block_list` (list): Lista de bloques en el **DataNode**.
-   - **Retorno**:
-     - Ninguno.
+     - `block_id` (string): El identificador del bloque que se va a eliminar.
+   - **Retorno recibido**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Bloque eliminado exitosamente"}
+       ``` 
 
 2. **Replicate Block**
    - **Descripción**: Cuando el **NameNode** detecta que un bloque tiene menos de dos réplicas, selecciona otro **DataNode** y ordena la replicación.
@@ -108,5 +183,8 @@ El **NameNode** no tiene funciones gRPC ejecutables por otros nodos. Toda la int
      - `block_id` (string): El identificador del bloque.
      - `source_datanode` (string): El **DataNode** que actualmente almacena el bloque.
      - `target_datanode` (string): El **DataNode** al que se replicará el bloque.
-   - **Retorno**:
-     - Ninguno.
+   - **Retorno recibido**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Bloque replicado exitosamente"}
+       ``` 
