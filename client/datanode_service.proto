@@ -1,34 +1,27 @@
 syntax = "proto3";
 
-package distributed_file_system;
-
-// Define the service for DataNode operations
 service DataNodeService {
-  // gRPC method for writing a block to the DataNode
+  //store a block of data
   rpc WriteBlock (WriteBlockRequest) returns (WriteBlockResponse);
-
-  // gRPC method for reading a block from the DataNode
+  
+  //read a block of data
   rpc ReadBlock (ReadBlockRequest) returns (ReadBlockResponse);
 }
 
-// Request message for writing a block to the DataNode
 message WriteBlockRequest {
-  string block_id = 1; // Unique identifier for the block
-  bytes data = 2; // Block data in binary format
+  string block_id = 1;   //identifier of the block
+  bytes data = 2;        //binary data of the block
 }
 
-// Response message for writing a block
 message WriteBlockResponse {
-  string status = 1; // Success or error message
+  string status = 1;     //status of the block storage (success or error)
 }
 
-// Request message for reading a block from the DataNode
 message ReadBlockRequest {
-  string block_id = 1; // Unique identifier for the block
+  string block_id = 1;   //identifier of the block
 }
 
-// Response message for reading a block
 message ReadBlockResponse {
-  bytes data = 1; // The binary data of the block
-  string status = 2; // Success or error message
+  bytes data = 1;        //binary data of the requested block
+  string status = 2;     //status of the operation (success or error)
 }
