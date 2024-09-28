@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/MiguelCock/HDFS/dataNode/datanode/dngrcp"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 type FileMetadata struct {
@@ -28,6 +28,7 @@ type DataNode struct {
 	HeartbeatInterval  int    `json:"heartbeat_interval"`
 	BlockCheckInterval int    `json:"block_check_interval"`
 	Files              map[string]FileMetadata
+	dngrcp.UnimplementedDataNodeServiceServer
 }
 
 // ---------- CRETATE NEW DATA NODE ----------
@@ -108,7 +109,8 @@ func (dn *DataNode) StartGRPC() {
 	}
 
 	server := grpc.NewServer()
-	reflection.Register(server)
+
+	dngrcp.RegisterDataNodeServiceServer(server, dn)
 
 	log.Printf("gRPC server running on %s:%d", dn.IP, grpcPort)
 	if err := server.Serve(lis); err != nil {

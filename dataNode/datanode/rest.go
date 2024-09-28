@@ -33,16 +33,31 @@ func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 // -------------------- BLOCK REPORT --------------------
+
+type FileChecksum struct {
+	Block_id string `json:"block_id"`
+	Checksum string `json:"checksum"`
+}
+
 func (dn *DataNode) blockReport() {
 	ticker := time.NewTicker(time.Duration(dn.BlockCheckInterval) * time.Second)
 	defer ticker.Stop()
 	url := fmt.Sprintf("http://%s:%d/block_report", dn.NameNodeIP, dn.NameNodePort)
 
-	body := map[string]interface{}{
-		"datanode_id":   dn.IP,
-		"block_list":    []string{"block1", "block2"}, // Aquí puedes agregar la lógica real
-		"checksum_list": []string{"checksum1", "checksum2"},
+	var files []FileChecksum
+
+	for block_id, metadata := range dn.Files {
+		files = append(files, FileChecksum{
+			Block_id: block_id,
+			Checksum: metadata.Checksum,
+		})
 	}
+
+	body := map[string]interface{}{
+		"datanode_id": dn.IP,
+		"blocks":      files,
+	}
+
 	jsonData, _ := json.Marshal(body)
 
 	resp, err := http.Post(url, "aplication/json", bytes.NewBuffer(jsonData))

@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	fmt.Printf("STARTING SERVER")
+	fmt.Print("STARTING SERVER")
 
 	dn := datanode.NewDataNode("bootstrap.json")
 
