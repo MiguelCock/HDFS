@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/MiguelCock/HDFS/dataNode/DN"
+	"github.com/MiguelCock/HDFS/dataNode/datanode"
 )
 
 func main() {
 	fmt.Printf("STARTING SERVER")
 
-	dn := DN.NewDataNode("bootstrap.json")
+	dn := datanode.NewDataNode("bootstrap.json")
+
 	if err := dn.StartRest(); err != nil {
 		log.Fatal(err)
 	}
+
+	dn.StartGRPC()
 }
