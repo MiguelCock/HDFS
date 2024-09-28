@@ -1,137 +1,112 @@
 ## **NameNode**
 
-El **NameNode** maneja la lógica de metadatos, la asignación de bloques y la replicación, interactuando con el **Client** y los **DataNodes** a través de API REST.
+El **NameNode** es responsable de administrar el espacio de nombres del sistema de archivos distribuido y de coordinar la ubicación de los bloques de datos. No almacena ni maneja directamente los bloques de datos, sino que gestiona los metadatos, indicando qué **DataNodes** contienen los bloques de un archivo.
 
-### **Endpoints API REST llamables por otros**
+---
 
-1. **`/assign_blocks`**
-   - **Método**: POST
-   - **Descripción**: Asigna DataNodes donde se deben almacenar los bloques de un archivo.
-   - **Es llamado por**: **Client**, cuando quiere subir un archivo y necesita que el **NameNode** le asigne los DataNodes para almacenar los bloques.
+### **Endpoints API REST llamables por otros nodos**
+
+1. **/create_file**
+   - **Método**: `POST`
+   - **Descripción**: Crea un nuevo archivo en el sistema de archivos distribuidos.
+   - **Es llamado por**: **Client**, cuando el usuario desea crear un archivo.
    - **Parámetros**:
-     - `file_name` (string): El nombre del archivo.
-     - `num_blocks` (int): El número de bloques en los que se dividirá el archivo.
-   - **Retorno**:
-     - JSON con la lista de DataNodes asignados para cada bloque:
-       ```json
-       {
-         "blocks": [
-           {"block_id": "hash_part1", "data_nodes": ["datanode1", "datanode2"]},
-           {"block_id": "hash_part2", "data_nodes": ["datanode1", "datanode3"]}
-         ]
-       }
-       ```
-
-2. **`/get_block_locations`**
-   - **Método**: GET
-   - **Descripción**: Devuelve las ubicaciones de los bloques de un archivo (los DataNodes que los almacenan).
-   - **Es llamado por**: **Client**, cuando quiere descargar un archivo y necesita conocer la ubicación de los bloques.
-   - **Parámetros**:
-     - `file_name` (string): El nombre del archivo.
-   - **Retorno**:
-     - JSON con las ubicaciones de los bloques:
-       ```json
-       {
-         "block_locations": [
-           {"block_id": "hash_part1", "data_nodes": ["datanode1", "datanode2"]},
-           {"block_id": "hash_part2", "data_nodes": ["datanode1", "datanode3"]}
-         ]
-       }
-       ```
-
-3. **`/delete_file`**
-   - **Método**: DELETE
-   - **Descripción**: Elimina los metadatos de un archivo y ordena la eliminación de los bloques en los DataNodes.
-   - **Es llamado por**: **Client**, cuando el usuario desea eliminar un archivo del sistema.
-   - **Parámetros**:
-     - `file_name` (string): El nombre del archivo a eliminar.
+     - `path` (string): La ruta completa del archivo.
    - **Retorno**:
      - JSON indicando éxito o error:
        ```json
-       {"status": "Archivo eliminado correctamente"}
+       {"status": "Archivo creado exitosamente"}
        ```
 
-4. **`/list_directory`**
-   - **Método**: GET
-   - **Descripción**: Lista los archivos y directorios en un directorio dado.
-   - **Es llamado por**: **Client**, cuando el usuario necesita ver la lista de archivos en un directorio.
+2. **/delete_file**
+   - **Método**: `DELETE`
+   - **Descripción**: Elimina un archivo del sistema de archivos.
+   - **Es llamado por**: **Client**, cuando el usuario desea eliminar un archivo.
    - **Parámetros**:
-     - `directory_path` (string): La ruta del directorio.
+     - `path` (string): La ruta completa del archivo que se va a eliminar.
+   - **Retorno**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Archivo eliminado exitosamente"}
+       ```
+
+3. **/create_directory**
+   - **Método**: `POST`
+   - **Descripción**: Crea un nuevo directorio en el sistema de archivos.
+   - **Es llamado por**: **Client**, cuando el usuario desea crear un directorio.
+   - **Parámetros**:
+     - `path` (string): La ruta completa del directorio que se va a crear.
+   - **Retorno**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Directorio creado exitosamente"}
+       ```
+
+4. **/delete_directory**
+   - **Método**: `DELETE`
+   - **Descripción**: Elimina un directorio vacío en el sistema de archivos.
+   - **Es llamado por**: **Client**, cuando el usuario desea eliminar un directorio.
+   - **Parámetros**:
+     - `path` (string): La ruta completa del directorio que se va a eliminar.
+   - **Retorno**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Directorio eliminado exitosamente"}
+       ```
+
+5. **/list_directory**
+   - **Método**: `GET`
+   - **Descripción**: Lista los archivos y directorios dentro de un directorio.
+   - **Es llamado por**: **Client**, cuando el usuario desea listar los contenidos de un directorio.
+   - **Parámetros**:
+     - `path` (string): La ruta completa del directorio.
    - **Retorno**:
      - JSON con la lista de archivos y directorios:
        ```json
-       {
-         "files": ["archivo1", "archivo2"],
-         "directories": ["dir1", "dir2"]
-       }
+       {"contents": ["file1", "file2", "subdirectory"]}
        ```
 
-5. **`/create_directory`**
-   - **Método**: POST
-   - **Descripción**: Crea un nuevo directorio en el sistema.
-   - **Es llamado por**: **Client**, cuando el usuario desea crear un nuevo directorio.
+6. **/get_block_locations**
+   - **Método**: `GET`
+   - **Descripción**: Devuelve la ubicación de los bloques de un archivo, indicando qué **DataNodes** contienen cada bloque.
+   - **Es llamado por**: **Client**, cuando necesita leer un archivo y saber en qué **DataNodes** se encuentran los bloques.
    - **Parámetros**:
-     - `directory_path` (string): La ruta del nuevo directorio.
+     - `path` (string): La ruta completa del archivo.
    - **Retorno**:
-     - JSON indicando éxito o error:
+     - JSON con la lista de **DataNodes** donde se encuentran los bloques del archivo:
        ```json
-       {"status": "Directorio creado correctamente"}
+       {"blocks": [
+         {"block_id": "block1", "datanodes": ["datanode1", "datanode2"]},
+         {"block_id": "block2", "datanodes": ["datanode3", "datanode4"]}
+       ]}
        ```
 
-6. **`/receive_block_report`**
-   - **Método**: POST
-   - **Descripción**: Recibe el reporte de bloques de los DataNodes.
-   - **Es llamado por**: **DataNode**, cuando envía un reporte de los bloques que almacena.
-   - **Parámetros**:
-     - `datanode_id` (string): El identificador del DataNode.
-     - `block_list` (array): La lista de bloques almacenados en el DataNode.
-   - **Retorno**:
-     - JSON indicando éxito o error:
-       ```json
-       {"status": "Reporte recibido"}
-       ```
+---
 
-7. **`/heartbeat`**
-   - **Método**: POST
-   - **Descripción**: Recibe una señal de vida de un DataNode.
-   - **Es llamado por**: **DataNode**, periódicamente para indicar que está operativo.
-   - **Parámetros**:
-     - `datanode_id` (string): El identificador del DataNode.
-   - **Retorno**:
-     - JSON indicando éxito o error:
-       ```json
-       {"status": "Heartbeat recibido"}
-       ```
+### **Funciones gRPC ejecutables por otros nodos**
 
-### **Funciones propias que llaman a otros nodos**
+El **NameNode** no tiene funciones gRPC ejecutables por otros nodos. Toda la interacción se realiza a través de API REST.
 
-1. **Replicación de bloques (`replicate_block`)**
+---
+
+### **Funciones propias del NameNode que llaman a otros nodos**
+
+1. **Receive Block Report**
+   - **Descripción**: Recibe un informe de los bloques almacenados en un **DataNode**.
    - **Llama a**:
-     - `/replicate_block` en **DataNode** (API REST): Ordena a un DataNode que replique un bloque a otro DataNode.
+     - **DataNode** a través del endpoint `/block_report` (API REST), cuando un **DataNode** informa sobre los bloques que está almacenando.
+   - **Parámetros**:
+     - `block_list` (list): Lista de bloques en el **DataNode**.
+   - **Retorno**:
+     - Ninguno.
+
+2. **Replicate Block**
+   - **Descripción**: Cuando el **NameNode** detecta que un bloque tiene menos de dos réplicas, selecciona otro **DataNode** y ordena la replicación.
+   - **Llama a**:
+     - **DataNode** a través del endpoint `/replicate_block` (API REST), para ordenar la replicación de un bloque a otro nodo.
    - **Parámetros**:
      - `block_id` (string): El identificador del bloque.
-     - `source_datanode` (string): El DataNode fuente.
-     - `target_datanode` (string): El DataNode destino.
+     - `source_datanode` (string): El **DataNode** que actualmente almacena el bloque.
+     - `target_datanode` (string): El **DataNode** al que se replicará el bloque.
    - **Retorno**:
-     - JSON con el estado de la replicación:
-       ```json
-       {"status": "Replicación exitosa"}
-       ```
-
-2. **Asignación de bloques (`assign_blocks`)**
-   - **Llama a**:
-     - **Ninguno**, es un proceso interno.
-   - **Descripción**: El NameNode asigna DataNodes para que el cliente pueda enviar los bloques de un archivo.
-   - **Parámetros**:
-     - `file_name` (string): El nombre del archivo.
-     - `num_blocks` (int): El número de bloques del archivo.
-   - **Retorno**:
-     - JSON con la asignación de bloques y DataNodes:
-       ```json
-       {
-         "blocks": [
-           {"block_id": "hash_part1", "data_nodes": ["datanode1", "datanode2"]},
-           {"block_id": "hash_part2", "data_nodes": ["datanode1", "datanode3"]}
-         ]
-       }
-       ```
+     - Ninguno.
