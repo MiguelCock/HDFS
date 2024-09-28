@@ -1,58 +1,149 @@
-**Client** interactúa principalmente con el **NameNode** a través de API REST para operaciones como subir, bajar y listar archivos. La transferencia de datos (subir/bajar bloques) ocurre directamente entre el **Client** y los **DataNodes** usando **gRPC**.
+## **Client**
 
-### **Funciones del Client**:
-El cliente es responsable de interactuar con el sistema de archivos distribuidos mediante API REST para las operaciones de metadatos y gRPC para el envío de archivos reales.
+El **Client** es responsable de interactuar con el sistema de archivos distribuido. Utiliza API REST para coordinarse con el **NameNode** y obtener información sobre la ubicación de los bloques, crear/eliminar archivos o directorios, y solicitar metadatos de los archivos. Además, utiliza gRPC para transferir bloques de datos directamente a los **DataNodes** cuando se realizan operaciones de subida o descarga de archivos.
 
-- **create_file(path)**: Solicita al NameNode crear un archivo vacío en el sistema de archivos con el nombre especificado.
-- **write_file(path, data)**: 
-   - Solicita al NameNode la ubicación de los DataNodes para almacenar bloques.
-   - Fragmenta el archivo en bloques y los envía a los DataNodes seleccionados utilizando gRPC en una pipeline.
-   - Confirma con el NameNode la correcta replicación de los bloques.
-- **read_file(path)**:
-   - Solicita al NameNode la ubicación de los bloques replicados del archivo.
-   - Lee los bloques directamente desde los DataNodes más cercanos utilizando gRPC.
-- **delete_file(path)**: Solicita al NameNode eliminar el archivo del sistema.
-- **append_file(path, data)**: Permite agregar más datos a un archivo existente solicitando al NameNode nuevos DataNodes para los bloques adicionales.
-- **create_directory(path)**: Crea un directorio en el sistema solicitando al NameNode.
-- **delete_directory(path)**: Elimina un directorio si está vacío.
-- **list_directory(path)**: Solicita al NameNode una lista de archivos y directorios en el directorio especificado.
-- **get_file_block_locations(path)**: Recupera las ubicaciones de los bloques del archivo desde el NameNode para fines de lectura.
-- **hflush(path)**: Envia todos los bloques pendientes de un archivo abierto en escritura y espera las confirmaciones de los DataNodes para asegurar la visibilidad de los datos escritos.
+---
 
+### **Endpoints API REST llamables por otros**
 
-### **Endpoints para el Client**
+El **Client** no tiene endpoints API REST llamables por otros nodos. Todas las interacciones son iniciadas por el **Client** hacia el **NameNode** y los **DataNodes**.
 
-El cliente interactúa con el NameNode para recibir la ubicación de los DataNodes, y luego se comunica directamente con ellos para leer/escribir datos. Aquí están los endpoints clave:
+---
 
-#### **Subir un archivo (`/upload`)**
-- **Método**: `POST`
-- **Descripción**: El cliente inicia el proceso de subir un archivo solicitando al NameNode los DataNodes donde se almacenarán los bloques.
-- **Conecta con**:
-  - **NameNode**: `getDataNodesForWrite(fileName)` (API REST).
-  - **DataNode**: `storeBlock(blockData)` (gRPC).
+### **Funciones gRPC ejecutables por otros**
 
-#### **Descargar un archivo (`/download`)**
-- **Método**: `GET`
-- **Descripción**: El cliente solicita los bloques de un archivo y los reconstruye. Primero pregunta al NameNode por la ubicación de los bloques.
-- **Conecta con**:
-  - **NameNode**: `getDataNodesForRead(fileName)` (API REST).
-  - **DataNode**: `readBlock(blockID)` (gRPC).
+El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su función principal es iniciar solicitudes para leer y escribir bloques de archivos en los **DataNodes**.
 
-#### **Listar archivos (`/ls`)**
-- **Método**: `GET`
-- **Descripción**: El cliente solicita una lista de archivos y directorios en el NameNode.
-- **Conecta con**:
-  - **NameNode**: `listFiles(directoryPath)` (API REST).
+---
 
-#### **Eliminar archivo (`/delete`)**
-- **Método**: `DELETE`
-- **Descripción**: El cliente solicita al NameNode eliminar un archivo y luego borra los bloques en los DataNodes.
-- **Conecta con**:
-  - **NameNode**: `removeFile(fileName)` (API REST).
-  - **DataNode**: `deleteBlock(blockID)` (gRPC).
+### **Funciones propias del Client que llaman a otros nodos**
 
-#### **Crear directorio (`/mkdir`)**
-- **Método**: `POST`
-- **Descripción**: El cliente crea un nuevo directorio en el sistema de archivos del NameNode.
-- **Conecta con**:
-  - **NameNode**: `createDirectory(directoryName)` (API REST).
+1. **Login (login)**
+   - **Descripción**: Inicia sesión en el sistema, recibe un token de autenticación y el tamaño de bloque.
+   - **Llama a**:
+     - **NameNode** a través de `/login` (API REST).
+   - **Parámetros**:
+     - `username` (string): Nombre de usuario.
+     - `password` (string): Contraseña.
+   - **Retorno recibido**:
+     - JSON con el token de autenticación y tamaño de bloque:
+       ```json
+       {"message": "Inicio de sesión exitoso", "token": "jwt_token", "block_size": 1048576}
+       ```
+
+2. **Registro de Cliente (register)**
+   - **Descripción**: Registra un nuevo cliente en el sistema.
+   - **Llama a**:
+     - **NameNode** a través de `/register_client` (API REST).
+   - **Parámetros**:
+     - `username` (string): Nombre de usuario.
+     - `password` (string): Contraseña.
+   - **Retorno recibido**:
+     - JSON con mensaje de éxito:
+       ```json
+       {"message": "Cliente registrado exitosamente"}
+       ```
+
+3. **Create File (put)**
+   - **Descripción**: Solicita al **NameNode** la creación de un archivo vacío en el sistema de archivos.
+   - **Llama a**:
+     - **NameNode** a través de `/create_file` (API REST).
+   - **Parámetros**:
+     - `path` (string): La ruta del archivo que se va a crear.
+     - `token` (string): Token de autenticación.
+   - **Retorno recibido POR EL NAMENODE**:
+     - JSON con la lista de bloques y sus ubicaciones:
+       ```json
+       {"blocks": [
+         {"block_id": "block1", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_id": "block2", "datanode": {"ip": "ip2", "port": 5001}}
+       ]}
+       ```
+    - **Retorno recibido POR CADA DATANODE**:
+      - Estructura de respuesta indicando éxito o error:
+        ```json
+        {"status": "Bloque almacenado exitosamente"}
+        ```
+
+4. **Read File (get)**
+   - **Descripción**: Descarga un archivo del sistema distribuido, recuperando cada bloque desde los **DataNodes** y reensamblando el archivo.
+   - **Llama a**:
+     - **NameNode** a través de `/get_block_locations` (API REST) para obtener la lista de **DataNodes** que tienen los bloques del archivo.
+     - **DataNode** a través de `read_block` (gRPC) para descargar los bloques desde los **DataNodes** correspondientes.
+   - **Parámetros**:
+     - `path` (string): La ruta del archivo que se va a leer.
+     - `token` (string): Token de autenticación.
+   - **Retorno recibido POR EL NAMENODE**:
+     - JSON con la lista de bloques y sus ubicaciones:
+       ```json
+       {"blocks": [
+         {"block_id": "block1", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_id": "block2", "datanode": {"ip": "ip2", "port": 5001}}
+       ]}
+       ```
+   - **Retorno recibido POR CADA DATANODE**:
+      - Estructura de respuesta con los datos del bloque:
+        ```json
+        {"data": "binary_data"}
+        ```
+
+5. **Delete File (rm)**
+   - **Descripción**: Elimina un archivo del sistema de archivos distribuido, tanto en el **NameNode** como en los **DataNodes**.
+   - **Llama a**:
+     - **NameNode** a través de `/delete_file` (API REST).
+   - **Parámetros**:
+     - `path` (string): La ruta del archivo que se va a eliminar.
+     - `token` (string): Token de autenticación.
+   - **Retorno recibido**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Archivo eliminado exitosamente"}
+       ```
+
+6. **Create Directory (mkdir)**
+   - **Descripción**: Crea un nuevo directorio en el sistema de archivos distribuido.
+   - **Llama a**:
+     - **NameNode** a través de `/create_directory` (API REST).
+   - **Parámetros**:
+     - `path` (string): La ruta del directorio que se va a crear.
+     - `token` (string): Token de autenticación.
+   - **Retorno recibido**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Directorio creado exitosamente"}
+       ```
+
+7. **Delete Directory (rmdir)**
+   - **Descripción**: Elimina un directorio y todo su contenido del sistema de archivos distribuido.
+   - **Llama a**:
+     - **NameNode** a través de `/delete_directory` (API REST).
+   - **Parámetros**:
+     - `path` (string): La ruta del directorio que se va a eliminar.
+     - `token` (string): Token de autenticación.
+   - **Retorno recibido**:
+     - JSON indicando éxito o error:
+       ```json
+       {"status": "Directorio y contenido eliminado exitosamente"}
+       ```
+
+8. **List Directory (ls)**
+   - **Descripción**: Devuelve la lista de archivos y subdirectorios dentro de un directorio.
+   - **Llama a**:
+     - **NameNode** a través de `/list_directory` (API REST).
+   - **Parámetros**:
+     - `path` (string): La ruta del directorio que se va a listar.
+     - `token` (string): Token de autenticación.
+   - **Retorno recibido**:
+     - JSON con la lista de archivos y directorios dentro del directorio:
+       ```json
+       {"contents": ["file1", "file2", "subdirectory"]}
+       ```
+
+9. **Change Directory (cd)**
+   - **Descripción**: Cambia el directorio de trabajo actual.
+   - **Llama a**:
+     - Esta operación no necesita comunicación con el **NameNode**. Es manejada localmente por el **Client**.
+   - **Parámetros**:
+     - `path` (string): La ruta del directorio al que se desea cambiar.
+   - **Retorno**:
+     - Confirmación de cambio de directorio en el sistema local del cliente.

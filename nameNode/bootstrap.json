@@ -1,0 +1,7 @@
+{
+    "own_ip": "172.31.93.31",
+    "own_port": 5001,
+    "block_size": 1048576,
+    "heartbeat_interval": 5,
+    "block_check_interval": 10
+}
