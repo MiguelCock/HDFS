@@ -23,11 +23,11 @@ python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. datanode_serv
 
 ### En Go (datanode):
 
+First, download the protoc compiler from https://github.com/protocolbuffers/protobuf/releases, then...
+
 ```bash
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-export PATH="$PATH:$(go env GOPATH)/bin"
-
-protoc --go_out=. --go-grpc_out=. datanode_service.proto
+protoc --go_out=. --go-grpc_out=. --go_opt=Mdatanode_service.proto=./ --go-grpc_opt=Mdatanode_service.proto=./ datanode_service.proto
 ```

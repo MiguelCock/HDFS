@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+option go_package = "./;main";
+
+package datanode_service;
+
 service DataNodeService {
   //store a block of data
   rpc WriteBlock (WriteBlockRequest) returns (WriteBlockResponse);
