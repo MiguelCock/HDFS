@@ -2,8 +2,13 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/MiguelCock/HDFS/dataNode/DN"
 )
 
 func main() {
-	fmt.Printf("a huevo")
+	fmt.Printf("STARTING SERVER")
+
+	dn := DN.NewDataNode()
+	dn.StartRest()
 }
