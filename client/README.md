@@ -18,7 +18,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
 
 ### **Funciones propias del Client que llaman a otros nodos**
 
-1. **Login**
+1. **Login (login)**
    - **Descripción**: Inicia sesión en el sistema, recibe un token de autenticación y el tamaño de bloque.
    - **Llama a**:
      - **NameNode** a través de `/login` (API REST).
@@ -26,12 +26,12 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
      - `username` (string): Nombre de usuario.
      - `password` (string): Contraseña.
    - **Retorno recibido**:
-     - JSON con el token de autenticación:
+     - JSON con el token de autenticación y tamaño de bloque:
        ```json
        {"message": "Inicio de sesión exitoso", "token": "jwt_token", "block_size": 1048576}
        ```
 
-2. **Registro de Cliente**
+2. **Registro de Cliente (register)**
    - **Descripción**: Registra un nuevo cliente en el sistema.
    - **Llama a**:
      - **NameNode** a través de `/register_client` (API REST).
@@ -41,10 +41,10 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
    - **Retorno recibido**:
      - JSON con mensaje de éxito:
        ```json
-        {"message": "Cliente registrado exitosamente"}
+       {"message": "Cliente registrado exitosamente"}
        ```
 
-3. **Create File**
+3. **Create File (put)**
    - **Descripción**: Solicita al **NameNode** la creación de un archivo vacío en el sistema de archivos.
    - **Llama a**:
      - **NameNode** a través de `/create_file` (API REST).
@@ -65,7 +65,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
         {"status": "Bloque almacenado exitosamente"}
         ```
 
-4. **Read File**
+4. **Read File (get)**
    - **Descripción**: Descarga un archivo del sistema distribuido, recuperando cada bloque desde los **DataNodes** y reensamblando el archivo.
    - **Llama a**:
      - **NameNode** a través de `/get_block_locations` (API REST) para obtener la lista de **DataNodes** que tienen los bloques del archivo.
@@ -87,7 +87,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
         {"data": "binary_data"}
         ```
 
-5. **Delete File**
+5. **Delete File (rm)**
    - **Descripción**: Elimina un archivo del sistema de archivos distribuido, tanto en el **NameNode** como en los **DataNodes**.
    - **Llama a**:
      - **NameNode** a través de `/delete_file` (API REST).
@@ -100,7 +100,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        {"status": "Archivo eliminado exitosamente"}
        ```
 
-6. **Create Directory**
+6. **Create Directory (mkdir)**
    - **Descripción**: Crea un nuevo directorio en el sistema de archivos distribuido.
    - **Llama a**:
      - **NameNode** a través de `/create_directory` (API REST).
@@ -113,8 +113,8 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        {"status": "Directorio creado exitosamente"}
        ```
 
-7. **Delete Directory**
-   - **Descripción**: Elimina un directorio vacío del sistema de archivos distribuido.
+7. **Delete Directory (rmdir)**
+   - **Descripción**: Elimina un directorio y todo su contenido del sistema de archivos distribuido.
    - **Llama a**:
      - **NameNode** a través de `/delete_directory` (API REST).
    - **Parámetros**:
@@ -123,10 +123,10 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
    - **Retorno recibido**:
      - JSON indicando éxito o error:
        ```json
-       {"status": "Directorio eliminado exitosamente"}
+       {"status": "Directorio y contenido eliminado exitosamente"}
        ```
 
-8. **List Directory**
+8. **List Directory (ls)**
    - **Descripción**: Devuelve la lista de archivos y subdirectorios dentro de un directorio.
    - **Llama a**:
      - **NameNode** a través de `/list_directory` (API REST).
@@ -134,7 +134,16 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
      - `path` (string): La ruta del directorio que se va a listar.
      - `token` (string): Token de autenticación.
    - **Retorno recibido**:
-     - JSON con la lista de archivos y directorios dentro del directorio.
+     - JSON con la lista de archivos y directorios dentro del directorio:
        ```json
        {"contents": ["file1", "file2", "subdirectory"]}
        ```
+
+9. **Change Directory (cd)**
+   - **Descripción**: Cambia el directorio de trabajo actual.
+   - **Llama a**:
+     - Esta operación no necesita comunicación con el **NameNode**. Es manejada localmente por el **Client**.
+   - **Parámetros**:
+     - `path` (string): La ruta del directorio al que se desea cambiar.
+   - **Retorno**:
+     - Confirmación de cambio de directorio en el sistema local del cliente.
