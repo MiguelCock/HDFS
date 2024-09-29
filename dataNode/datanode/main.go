@@ -88,10 +88,10 @@ func (dn *DataNode) StartRest() error {
 
 	go dn.heartBeat()
 	go dn.blockReport()
-	dn.checkSumVerification()
 
 	http.HandleFunc("/delete_block/", dn.deleteBlock)
-	http.HandleFunc("/replicatet_block/", dn.replicatetBlock)
+	http.HandleFunc("/replicatet_block", dn.replicatetBlock)
+	http.HandleFunc("/checksum", dn.checkSumVerification)
 
 	log.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))

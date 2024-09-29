@@ -11,29 +11,7 @@ import (
 	"time"
 )
 
-// -------------------- DELETE BLOCK --------------------
-func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {
-	filePath := strings.TrimPrefix(r.URL.Path, "/delete_block/")
-
-	if filePath == "" {
-		http.Error(w, "File path not provided", http.StatusBadRequest)
-		return
-	}
-
-	if _, exist := dn.Files[filePath]; !exist {
-		http.Error(w, "File Not found", http.StatusNotFound)
-		return
-	}
-
-	os.Remove(filePath)
-
-	delete(dn.Files, filePath)
-
-	w.WriteHeader(http.StatusOK)
-}
-
 // -------------------- BLOCK REPORT --------------------
-
 type FileChecksum struct {
 	Block_id string `json:"block_id"`
 	Checksum string `json:"checksum"`
@@ -93,8 +71,29 @@ func (dn *DataNode) heartBeat() {
 	resp.Body.Close()
 }
 
+// -------------------- DELETE BLOCK --------------------
+func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimPrefix(r.URL.Path, "/delete_block/")
+
+	if filePath == "" {
+		http.Error(w, "File path not provided", http.StatusBadRequest)
+		return
+	}
+
+	if _, exist := dn.Files[filePath]; !exist {
+		http.Error(w, "File Not found", http.StatusNotFound)
+		return
+	}
+
+	os.Remove(filePath)
+
+	delete(dn.Files, filePath)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // -------------------- CHECK SUM --------------------
-func (dn *DataNode) checkSumVerification() {}
+func (dn *DataNode) checkSumVerification(w http.ResponseWriter, r *http.Request) {}
 
 // -------------------- REPLICATE BLOCK --------------------
 func (dn *DataNode) replicatetBlock(w http.ResponseWriter, r *http.Request) {
