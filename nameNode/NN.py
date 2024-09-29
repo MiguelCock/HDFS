@@ -70,10 +70,13 @@ class NameNode:
         source_datanode = random.choice(datanodes_with_block)
         block_id = block['block_id']
 
+        #quitando el atributo checksum y otros posibles que vengan en el futuro
+        filtered_datanodes_with_block = [{'ip':datanode['ip'], 'port':datanode['port']} for datanode in datanodes_with_block]
+
         #elegimos un DataNode aleatorio que NO tenga este bloque
         available_datanodes = [
             node for node in self.datanodes.values()
-            if node not in datanodes_with_block
+            if node not in filtered_datanodes_with_block
         ]
 
         if not available_datanodes:

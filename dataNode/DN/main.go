@@ -86,21 +86,22 @@ func (dn *DataNode) register() error {
 
 // ---------- START REST SERVER ----------
 func (dn *DataNode) StartRest() error {
-	if err := dn.register(); err != nil {
-		return err
-	}
+    if err := dn.register(); err != nil {
+        return err
+    }
 
-	go dn.heartBeat()
-	go dn.blockReport()
+    go dn.heartBeat()
+    go dn.blockReport()
 
-	http.HandleFunc("/delete_block/", dn.deleteBlock)
-	http.HandleFunc("/replicate_block", dn.replicateBlock)
+    http.HandleFunc("/delete_block", dn.deleteBlock)
+    http.HandleFunc("/replicate_block", dn.replicateBlock)
 
-	log.Println("Server starting on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+    log.Printf("REST server starting on port %d...", dn.Port)
+    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", dn.Port), nil))
 
-	return nil
+    return nil
 }
+
 
 // ============================== GRPC =============================
 
