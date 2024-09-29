@@ -120,7 +120,7 @@ class Client:
         #usamos gRPC para enviar bloques a los DataNodes
         channel = grpc.insecure_channel(f'{datanode_ip}:{datanode_port}')
         stub = datanode_service_pb2_grpc.DataNodeServiceStub(channel)
-        response = stub.write_block(datanode_service_pb2.WriteBlockRequest(block_id=block_id, data=block_data))
+        response = stub.WriteBlock(datanode_service_pb2.WriteBlockRequest(block_id=block_id, data=block_data))
         if response.status == "Bloque almacenado exitosamente":
             print(f"Block {block_id} sent successfully to {datanode_ip}:{datanode_port}")
         else:
@@ -130,7 +130,7 @@ class Client:
         #usamos gRPC para leer un bloque de un DataNode
         channel = grpc.insecure_channel(f'{datanode_ip}:{datanode_port}')
         stub = datanode_service_pb2_grpc.DataNodeServiceStub(channel)
-        response = stub.read_block(datanode_service_pb2.ReadBlockRequest(block_id=block_id))
+        response = stub.ReadBlock(datanode_service_pb2.ReadBlockRequest(block_id=block_id))
         if response.status == "Bloque leído exitosamente":
             return response.data
         else:
@@ -213,7 +213,7 @@ class Client:
                     self.current_directory = '/' + self.current_directory + '/'
         else:
             if self.current_directory == '/':
-                self.current_directory += directory_path
+                self.current_directory = '/' + directory_path + '/'
             else:
                 self.current_directory += directory_path + '/'
 
