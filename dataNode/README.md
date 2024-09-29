@@ -7,13 +7,12 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
 ### **Endpoints API REST llamables por otros nodos**
 
 1. **/replicate_block**
-
    - **Método**: `POST`
    - **Descripción**: Inicia la replicación de un bloque hacia otro **DataNode**, basado en la orden del **NameNode**.
    - **Es llamado por**: **NameNode**, cuando detecta que un bloque necesita replicarse.
    - **Parámetros**:
      - `block_id` (string): El identificador del bloque.
-     - `target_datanode` (string): El **DataNode** de destino para la replicación.
+     - `target_datanode` (string):El **DataNode** de destino para la replicación, formato `ip:port`.
    - **Retorno**:
      - JSON indicando éxito o error:
 
@@ -39,16 +38,15 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
 ### **Funciones gRPC ejecutables por otros nodos**
 
 1. **read_block**
-
    - **Descripción**: Proporciona los datos de un bloque almacenado en este **DataNode**.
    - **Es llamado por**: **Client**, cuando necesita leer los datos de un bloque.
    - **Parámetros**:
      - `block_id` (string): El identificador del bloque que se quiere leer.
    - **Retorno**:
-     - Estructura de respuesta con los datos del bloque:
+     - Estructura de respuesta **ReadBlockResponse** con los datos del bloque:
 
        ```json
-       { "data": "binary_data" }
+       { "data": "binary_data", "status": "Bloque leído exitosamente" }
        ```
 
 2. **write_block**
@@ -58,7 +56,7 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
      - `block_id` (string): El identificador del bloque.
      - `data` (binary): Los datos del bloque a almacenar.
    - **Retorno**:
-     - Estructura de respuesta indicando éxito o error:
+     - Estructura de respuesta **WriteBlockResponse** indicando éxito o error:
 
        ```json
        { "status": "Bloque almacenado exitosamente" }
@@ -66,10 +64,9 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
 
 ---
 
-- # **DataNode**: gRPC para enviar el bloque a otro DataNode
+### **Funciones propias del Datanode que llaman a otros nodos**
 
 1. **Register DataNode**
-
    - **Descripción**: Al iniciarse, el **DataNode** se registra en el **NameNode** para recibir el tamaño de bloque y los intervalos de heartbeats y block reports.
    - **Llama a**:
      - **NameNode** a través del endpoint `/register_datanode` (API REST).
@@ -88,7 +85,6 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
        ```
 
 2. **Heartbeat**
-
    - **Descripción**: Envía señales periódicas al **NameNode** para indicar que el **DataNode** está activo.
    - **Llama a**:
      - **NameNode** a través del endpoint `/heartbeat` (API REST).
@@ -105,5 +101,16 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
      - `datanode_id` (string): El identificador de ese **DataNode**.
      - `block_list` (list): Lista de bloques almacenados.
      - `checksum_list` (list): Lista de checksums de los bloques.
+     - **En forma de**:
+
+        ```json
+        {
+          "datanode_id": "datanode_id",
+          "blocks": [
+            {"block_id": "block1_id", "checksum": "block1_checksum"},
+            {"block_id": "block2_id", "checksum": "block2_checksum"},
+            ...
+          ]
+        }
+        ```
    - **Retorno recibido**: - Ninguno.
-     > > > > > > > main
