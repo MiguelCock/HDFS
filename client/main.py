@@ -37,17 +37,20 @@ class FileSystemClientApp:
 
                 action = command[0]
 
-                if action == 'login':
+                if action == 'register':
+                    if len(command) != 3:
+                        print('Usage: register <username> <password>')
+                    else:
+                        self.client.register(command[1], command[2])
+
+                elif action == 'login':
                     if len(command) != 3:
                         print('Usage: login <username> <password>')
                     else:
                         self.client.login(command[1], command[2])
 
-                elif action == 'register':
-                    if len(command) != 3:
-                        print('Usage: register <username> <password>')
-                    else:
-                        self.client.register(command[1], command[2])
+                elif action == 'logout':
+                    self.client.logout()
 
                 elif action == 'put':
                     if len(command) != 2:
@@ -101,8 +104,9 @@ class FileSystemClientApp:
                 elif action == 'help':
                     print('','='*20,
                           'COMMANDS:',
-                          'login <username> <password>',
                           'register <username> <password>',
+                          'login <username> <password>',
+                          'logout',
                           'put <file_path>',
                           'get <remote_file_path>',
                           'rm <file_path>',
