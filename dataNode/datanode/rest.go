@@ -33,9 +33,9 @@ func (dn *DataNode) blockReport() {
 		}
 
 		body := map[string]interface{}{
-			"datanode_ip": dn.IP,
+			"datanode_ip":   dn.IP,
 			"datanode_port": dn.Port,
-			"blocks": blocks,
+			"blocks":        blocks,
 		}
 
 		jsonData, _ := json.Marshal(body)
@@ -43,11 +43,24 @@ func (dn *DataNode) blockReport() {
 		resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 		if err != nil {
 			log.Printf("Failed to send block report request: %v", err)
+			continue
+		}
+
+		defer resp.Body.Close()
+
+		var respData map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		if err != nil {
+			log.Printf("Failed to decode response: %v", err)
+			continue
 		}
 
 		log.Printf("Response Status: %s\n", resp.Status)
 
-		resp.Body.Close()
+		// Verificar si hay un mensaje en la respuesta
+		if message, exists := respData["message"]; exists {
+			log.Printf("NameNode message: %s", message)
+		}
 	}
 }
 
@@ -60,7 +73,7 @@ func (dn *DataNode) heartBeat() {
 		url := fmt.Sprintf("http://%s:%d/heartbeat", dn.NameNodeIP, dn.NameNodePort)
 
 		body := map[string]interface{}{
-			"datanode_ip": dn.IP,
+			"datanode_ip":   dn.IP,
 			"datanode_port": dn.Port,
 		}
 		jsonData, _ := json.Marshal(body)
@@ -68,13 +81,26 @@ func (dn *DataNode) heartBeat() {
 		resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 		if err != nil {
 			log.Printf("Failed to send heartbeat request: %v", err)
+			continue
+		}
+
+		defer resp.Body.Close()
+
+		var respData map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		if err != nil {
+			log.Printf("Failed to decode response: %v", err)
+			continue
 		}
 
 		log.Printf("Response Status: %s\n", resp.Status)
 
-		resp.Body.Close()
+		if message, exists := respData["message"]; exists {
+			log.Printf("NameNode message: %s", message)
+		}
 	}
 }
+
 
 // -------------------- DELETE BLOCK --------------------
 func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {

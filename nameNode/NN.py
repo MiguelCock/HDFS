@@ -292,7 +292,7 @@ class NameNode:
             if datanode_key not in self.datanodes:
                 return jsonify({"message": "DataNode not registered"}), 404
 
-            #return jsonify({"message": "heartbeat received"}), 200
+            return jsonify({"message": "heartbeat received"}), 200
         
         @self.app.route('/block_report', methods=['POST'])
         def block_report():
