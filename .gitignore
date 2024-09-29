@@ -1,2 +1,3 @@
-client/main_prueba.py
 *.pyc
+client/*
+dataNode/*

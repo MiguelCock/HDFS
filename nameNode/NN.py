@@ -1,5 +1,7 @@
 import json
 from flask import Flask, request, jsonify
+import hashlib
+import random
 
 class NameNode:
     def __init__(self, bootstrap_path):
@@ -17,13 +19,29 @@ class NameNode:
         self.filesystem = {}  #diccionario para gestionar archivos y directorios
         self.block_locations = {}  #diccionario para rastrear la ubicación de bloques
         self.clients = {}  #diccionario para los clientes registrados
+        self.tokens = {}  #diccionario para los tokens de los clientes logeados en el sistema
         self.datanodes = {}  #diccionario para los DataNodes registrados
 
         #inicializamos las rutas del API REST
         self.define_routes()
 
+    def generate_user_token(username, password):
+        #concatenamos el nombre de usuario y la contraseña
+        text_to_hash = f"{username}|{password}"
+        #calculamos el hash de 16 bits
+        hash_object = hashlib.md5(text_to_hash.encode())
+        return hash_object.hexdigest()[:16]
+    
+    def generate_block_id(file_path, part_number):
+        #concatenamos la ruta completa con la parte correspondiente
+        text_to_hash = f"{file_path}.part{part_number}"
+        #calculamos el hash de 16 bits
+        hash_object = hashlib.md5(text_to_hash.encode())
+        return hash_object.hexdigest()[:16]
+    
     def define_routes(self):
         #definimos las rutas de los endpoints
+
 
         @self.app.route('/register_client', methods=['POST'])
         def register_client():
@@ -50,41 +68,75 @@ class NameNode:
 
             if username not in self.clients or self.clients[username] != password:
                 return jsonify({"message": "invalid credentials"}), 401
+            
+            token = self.generate_user_token(username, password)
 
-            token = "jwt_token"
+            if token in self.tokens:
+                return jsonify({"message": "client already logged in"}), 400
+
+            self.tokens[token] = username
             return jsonify({"message": "login successful", "token": token, "block_size": self.block_size}), 200
+        
+        @self.app.route('/logout', methods=['POST'])
+        def logout():
+            #cerramos la sesión de un cliente y eliminamos el token
+            token = request.headers.get('Authorization')
+            if token not in self.tokens:
+                return jsonify({"message": "unauthorized"}), 401
+
+            del self.tokens[token]
+            return jsonify({"message": "logout successful"}), 200
 
         @self.app.route('/create_file', methods=['POST'])
         def create_file():
             #creamos un archivo nuevo en el sistema
             token = request.headers.get('Authorization')
-            if token != "Bearer jwt_token":
+            if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
 
             data = request.json
             path = data.get('path')
+            size = data.get('size')
 
-            if not path:
-                return jsonify({"message": "missing file path"}), 400
+            if not path or not size:
+                return jsonify({"message": "missing file path or size"}), 400
 
             if path in self.filesystem:
                 return jsonify({"message": "file already exists"}), 400
 
-            #simulamos la asignación de bloques a DataNodes
-            blocks = [
-                {"block_id": "block1", "datanode": {"ip": "172.31.93.40", "port": 5001}},
-                {"block_id": "block2", "datanode": {"ip": "172.31.93.41", "port": 5001}}
-            ]
+            #calculamos la cantidad de bloques
+            blocks_quantity = (size // self.block_size) + (1 if size % self.block_size != 0 else 0)
+            blocks = []
+
+            for i in range(blocks_quantity):
+                #seleccionamos un DataNode aleatoriamente
+                selected_datanode = random.choice(list(self.datanodes.values()))
+                
+                #generamos el block_id utilizando el hash de la ruta del archivo concatenado con .partN
+                block_id = self.generate_block_id(path, i + 1)
+                
+                block = {
+                    "block_index": i + 1,
+                    "block_id": block_id,
+                    "datanode": {
+                        "ip": selected_datanode['ip'],
+                        "port": selected_datanode['port']
+                    }
+                }
+                blocks.append(block)
+
+            #almacenamos la información del archivo
             self.filesystem[path] = blocks
             self.block_locations[path] = blocks
 
-            return jsonify({"blocks": blocks}), 200
+            return jsonify({"blocks_quantity": blocks_quantity, "blocks": blocks}), 200
+
 
         @self.app.route('/delete_file', methods=['DELETE'])
         def delete_file():
             #eliminamos un archivo del sistema
             token = request.headers.get('Authorization')
-            if token != "Bearer jwt_token":
+            if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
 
             path = request.args.get('path')
@@ -104,7 +156,7 @@ class NameNode:
         def create_directory():
             #creamos un directorio nuevo en el sistema
             token = request.headers.get('Authorization')
-            if token != "Bearer jwt_token":
+            if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
 
             data = request.json
@@ -124,7 +176,7 @@ class NameNode:
         def delete_directory():
             #eliminamos un directorio del sistema
             token = request.headers.get('Authorization')
-            if token != "Bearer jwt_token":
+            if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
 
             path = request.args.get('path')
@@ -142,7 +194,7 @@ class NameNode:
         def list_directory():
             #listamos los archivos y directorios dentro de un directorio
             token = request.headers.get('Authorization')
-            if token != "Bearer jwt_token":
+            if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
 
             path = request.args.get('path')
@@ -160,7 +212,7 @@ class NameNode:
         def get_block_locations():
             #obtenemos las ubicaciones de los bloques de un archivo
             token = request.headers.get('Authorization')
-            if token != "Bearer jwt_token":
+            if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
 
             path = request.args.get('path')
@@ -172,7 +224,7 @@ class NameNode:
                 return jsonify({"message": "file not found"}), 404
 
             blocks = self.block_locations[path]
-            return jsonify({"blocks": blocks}), 200
+            return jsonify({"blocks_quantity": len(blocks), "blocks": blocks}), 200
 
         @self.app.route('/register_datanode', methods=['POST'])
         def register_datanode():
@@ -195,6 +247,53 @@ class NameNode:
                 "heartbeat_interval": self.heartbeat_interval,
                 "block_report_interval": self.block_check_interval
             }), 200
+        
+        @self.app.route('/heartbeat', methods=['POST'])
+        def heartbeat():
+            #recibimos el heartbeat de un DataNode
+            data = request.json
+            datanode_ip = data.get('datanode_ip')
+            datanode_port = data.get('datanode_port')
+
+            if not datanode_ip or not datanode_port:
+                return jsonify({"message": "missing DataNode IP or port"}), 400
+
+            datanode_key = f"{datanode_ip}:{datanode_port}"
+            if datanode_key not in self.datanodes:
+                return jsonify({"message": "DataNode not registered"}), 404
+
+            #return jsonify({"message": "heartbeat received"}), 200
+        
+        @self.app.route('/block_report', methods=['POST'])
+        def block_report():
+            #recibimos un reporte de bloques de un DataNode
+            data = request.json
+            datanode_ip = data.get('datanode_ip')
+            datanode_port = data.get('datanode_port')
+            blocks = data.get('blocks')
+
+            if not datanode_ip or not datanode_port or not blocks:
+                return jsonify({"message": "missing DataNode IP, port or blocks"}), 400
+
+            datanode_key = f"{datanode_ip}:{datanode_port}"
+            if datanode_key not in self.datanodes:
+                return jsonify({"message": "DataNode not registered"}), 404
+
+            for block in blocks:
+                block_id = block['block_id']
+                block_path = block['block_path']
+                if block_path not in self.block_locations:
+                    continue
+
+                for i, stored_block in enumerate(self.block_locations[block_path]):
+                    if stored_block['block_id'] == block_id:
+                        self.block_locations[block_path][i]['datanode'] = {
+                            "ip": datanode_ip,
+                            "port": datanode_port
+                        }
+                        break
+
+            #return jsonify({"message": "block report received"}), 200
 
     def start_server(self):
         #iniciamos el servidor API REST con Flask

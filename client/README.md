@@ -18,20 +18,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
 
 ### **Funciones propias del Client que llaman a otros nodos**
 
-1. **Login (login)**
-   - **Descripción**: Inicia sesión en el sistema, recibe un token de autenticación y el tamaño de bloque.
-   - **Llama a**:
-     - **NameNode** a través de `/login` (API REST).
-   - **Parámetros**:
-     - `username` (string): Nombre de usuario.
-     - `password` (string): Contraseña.
-   - **Retorno recibido**:
-     - JSON con el token de autenticación y tamaño de bloque:
-       ```json
-       {"message": "Inicio de sesión exitoso", "token": "jwt_token", "block_size": 1048576}
-       ```
-
-2. **Registro de Cliente (register)**
+1. **Registro de Cliente (register)**
    - **Descripción**: Registra un nuevo cliente en el sistema.
    - **Llama a**:
      - **NameNode** a través de `/register_client` (API REST).
@@ -44,7 +31,32 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        {"message": "Cliente registrado exitosamente"}
        ```
 
-3. **Create File (put)**
+2. **Login (login)**
+   - **Descripción**: Inicia sesión en el sistema, recibe un token de autenticación y el tamaño de bloque.
+   - **Llama a**:
+     - **NameNode** a través de `/login` (API REST).
+   - **Parámetros**:
+     - `username` (string): Nombre de usuario.
+     - `password` (string): Contraseña.
+   - **Retorno recibido**:
+     - JSON con el token de autenticación y tamaño de bloque:
+       ```json
+       {"message": "Inicio de sesión exitoso", "token": "jwt_token", "block_size": 1048576}
+       ```
+
+3. **Logout (logout)**
+   - **Descripción**: Cierra la sesión del cliente en el sistema.
+   - **Llama a**:
+     - **NameNode** a través de `/logout` (API REST).
+   - **Parámetros**:
+     - `token` (string): Token de autenticación.
+   - **Retorno recibido**:
+     - JSON indicando éxito o error:
+       ```json
+       {"message": "Cierre de sesión exitoso"}
+       ```
+
+4. **Create File (put)**
    - **Descripción**: Solicita al **NameNode** la creación de un archivo vacío en el sistema de archivos.
    - **Llama a**:
      - **NameNode** a través de `/create_file` (API REST).
@@ -71,7 +83,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
         {"status": "Bloque almacenado exitosamente"}
         ```
 
-4. **Read File (get)**
+5. **Read File (get)**
    - **Descripción**: Descarga un archivo del sistema distribuido, recuperando cada bloque desde los **DataNodes** y reensamblando el archivo.
    - **Llama a**:
      - **NameNode** a través de `/get_block_locations` (API REST) para obtener la lista de **DataNodes** que tienen los bloques del archivo.
@@ -98,7 +110,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        { "data": "binary_data", "status": "Bloque leído exitosamente" }
        ```
 
-5. **Delete File (rm)**
+6. **Delete File (rm)**
    - **Descripción**: Elimina un archivo del sistema de archivos distribuido, tanto en el **NameNode** como en los **DataNodes**. En este caso, el **NameNode** se encarga de eliminar los metadatos del archivo y llamar a los **DataNodes** para que eliminen los bloques.
    - **Llama a**:
      - **NameNode** a través de `/delete_file` (API REST).
@@ -111,7 +123,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        {"status": "Archivo eliminado exitosamente"}
        ```
 
-6. **Create Directory (mkdir)**
+7. **Create Directory (mkdir)**
    - **Descripción**: Crea un nuevo directorio en el sistema de archivos distribuido.
    - **Llama a**:
      - **NameNode** a través de `/create_directory` (API REST).
@@ -124,7 +136,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        {"status": "Directorio creado exitosamente"}
        ```
 
-7. **Delete Directory (rmdir)**
+8. **Delete Directory (rmdir)**
    - **Descripción**: Elimina un directorio y todo su contenido del sistema de archivos distribuido.
    - **Llama a**:
      - **NameNode** a través de `/delete_directory` (API REST).
@@ -137,7 +149,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        {"status": "Directorio y contenido eliminado exitosamente"}
        ```
 
-8. **List Directory (ls)**
+9. **List Directory (ls)**
    - **Descripción**: Devuelve la lista de archivos y subdirectorios dentro de un directorio.
    - **Llama a**:
      - **NameNode** a través de `/list_directory` (API REST).
@@ -150,7 +162,7 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
        {"contents": ["file1", "file2", "subdirectory"]}
        ```
 
-9. **Change Directory (cd)**
+10. **Change Directory (cd)**
    - **Descripción**: Cambia el directorio de trabajo actual.
    - **Llama a**:
      - Esta operación no necesita comunicación con el **NameNode**. Es manejada localmente por el **Client**.

@@ -168,6 +168,18 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
         {"message": "Inicio de sesión exitoso", "token": "jwt_token", "block_size": 1048576}
         ```
 
+12. **/logout**
+    - **Método**: `POST`
+    - **Descripción**: Cierra sesión de un cliente en el sistema.
+    - **Es llamado por**: **Client** al cerrar sesión.
+    - **Parámetros**:
+      - `token` (string): Token de autenticación.
+    - **Retorno**:
+      - JSON indicando éxito o error:
+        ```json
+        {"message": "Cierre de sesión exitoso"}
+        ```
+
 ---
 
 ### **Funciones gRPC ejecutables por otros nodos**
