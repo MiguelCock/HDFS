@@ -90,14 +90,23 @@ class NameNode:
             'target_datanode_port': target_datanode['port']+1
         }
 
+        print(f"Replicating block {block_id} from {source_datanode['ip']}:{source_datanode['port']} to {target_datanode['ip']}:{target_datanode['port']+1}...")
+
+        # DEBUG
+        print('datanodes_with_block:', datanodes_with_block)
+        print('self.datanodes:', self.datanodes)
+        print('available_datanodes:', available_datanodes)
+        # END DEBUG
+
         try:
             response = requests.post(url, params=params)
+            response_message = response.json().get('message', 'No message')
             if response.status_code == 200:
-                print(f"Block {block_id} successfully replicated from {source_datanode['ip']} to {target_datanode['ip']}")
+                print(f"Block {block_id} successfully replicated from {source_datanode['ip']} to {target_datanode['ip']}. {response_message}")
                 #actualizamos las ubicaciones de los bloques
                 block['datanodes'].append(target_datanode)
             else:
-                print(f"Failed to replicate block {block_id}")
+                print(f"Failed to replicate block {block_id}. {response_message}")
         except Exception as e:
             print(f"Error during replication: {e}")
     

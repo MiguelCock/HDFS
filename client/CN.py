@@ -9,7 +9,7 @@ class Client:
         self.namenode_port = namenode_port
         self.token = None
         self.block_size = None
-        self.current_directory = "/"
+        self.current_directory = "/client/"
 
     def login(self, username, password):
         #llamamos al API REST del NameNode para iniciar sesión y obtener un token
