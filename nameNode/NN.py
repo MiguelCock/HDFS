@@ -3,6 +3,8 @@ from flask import Flask, request, jsonify
 import hashlib
 import random
 import requests
+import threading
+import time
 
 class NameNode:
     def __init__(self, bootstrap_path):
@@ -16,6 +18,8 @@ class NameNode:
         self.block_size = config['block_size']  #tamaño de bloque desde el bootstrap
         self.heartbeat_interval = config['heartbeat_interval']  #intervalo de heartbeat desde el bootstrap
         self.block_check_interval = config['block_check_interval']  #intervalo de verificación de bloques
+        self.replication_check_interval = config['replication_check_interval']  #intervalo para la verificación de replicación
+
 
         self.filesystem = {}  #diccionario para gestionar archivos y directorios
         self.block_locations = {}  #diccionario para rastrear la ubicación de bloques
@@ -25,6 +29,9 @@ class NameNode:
 
         #inicializamos las rutas del API REST
         self.define_routes()
+
+        #iniciamos el proceso de verificación de mínima replicación (dos DataNodes por bloque)
+        threading.Thread(target=self.check_block_replication, daemon=True).start()
 
     def generate_user_token(self, username, password):
         #concatenamos el nombre de usuario y la contraseña
@@ -39,10 +46,62 @@ class NameNode:
         #calculamos el hash de 16 bits
         hash_object = hashlib.md5(text_to_hash.encode())
         return hash_object.hexdigest()[:16]
+
+    def check_block_replication(self):
+        #este hilo se ejecuta periódicamente y revisa que cada bloque tenga al menos dos réplicas
+        while True:
+            time.sleep(self.replication_check_interval)  #esperamos el tiempo puesto en el bootstrap
+            print("Checking block replication status...")
+
+            for path, blocks in self.block_locations.items():
+                for block in blocks:
+                    if len(block.get('datanodes', [])) < 2:
+                        print(f"Block {block['block_id']} needs replication.")
+                        self.replicate_block(block)
+
+    def replicate_block(self, block):
+        #lógica para replicar un bloque si no tiene suficientes réplicas
+        datanodes_with_block = block.get('datanodes', [])
+        if not datanodes_with_block:
+            print(f"No DataNode found for block {block['block_id']}")
+            return
+        
+        #seleccionamos un DataNode que tenga el bloque
+        source_datanode = random.choice(datanodes_with_block)
+        block_id = block['block_id']
+
+        #elegimos un DataNode aleatorio que NO tenga este bloque
+        available_datanodes = [
+            node for node in self.datanodes.values()
+            if node not in datanodes_with_block
+        ]
+
+        if not available_datanodes:
+            print("No available DataNodes for replication.")
+            return
+
+        target_datanode = random.choice(available_datanodes)
+
+        #hacemos la petición para replicar el bloque en otro DataNode
+        url = f"http://{source_datanode['ip']}:{source_datanode['port']}/replicate_block"
+        params = {
+            'block_id': block_id,
+            'target_datanode': f"{target_datanode['ip']}:{target_datanode['port']+1}"
+        }
+
+        try:
+            response = requests.post(url, params=params)
+            if response.status_code == 200:
+                print(f"Block {block_id} successfully replicated from {source_datanode['ip']} to {target_datanode['ip']}")
+                #actualizamos las ubicaciones de los bloques
+                block['datanodes'].append(target_datanode)
+            else:
+                print(f"Failed to replicate block {block_id}")
+        except Exception as e:
+            print(f"Error during replication: {e}")
     
     def define_routes(self):
         #definimos las rutas de los endpoints
-
 
         @self.app.route('/register_client', methods=['POST'])
         def register_client():

@@ -3,5 +3,6 @@
     "own_port": 5000,
     "block_size": 1048576,
     "heartbeat_interval": 5,
-    "block_check_interval": 10
+    "block_check_interval": 10,
+    "replication_check_interval": 20
 }

@@ -46,10 +46,10 @@ func (dn *DataNode) blockReport() {
 			continue
 		}
 
-		defer resp.Body.Close()
-
 		var respData map[string]interface{}
 		err = json.NewDecoder(resp.Body).Decode(&respData)
+		resp.Body.Close()
+
 		if err != nil {
 			log.Printf("Failed to decode response: %v", err)
 			continue
@@ -83,10 +83,10 @@ func (dn *DataNode) heartBeat() {
 			continue
 		}
 
-		defer resp.Body.Close()
-
 		var respData map[string]interface{}
 		err = json.NewDecoder(resp.Body).Decode(&respData)
+		resp.Body.Close()
+
 		if err != nil {
 			log.Printf("Failed to decode response: %v", err)
 			continue
