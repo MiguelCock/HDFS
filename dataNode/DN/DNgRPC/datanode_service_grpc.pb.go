@@ -4,7 +4,7 @@
 // - protoc             v5.28.2
 // source: datanode_service.proto
 
-package dngrcp
+package DNgRPC
 
 import (
 	context "context"
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DataNodeService_WriteBlock_FullMethodName = "/datanode_service.DataNodeService/WriteBlock"
-	DataNodeService_ReadBlock_FullMethodName  = "/datanode_service.DataNodeService/ReadBlock"
+	DataNodeService_WriteBlock_FullMethodName = "/DNgRPC.DataNodeService/WriteBlock"
+	DataNodeService_ReadBlock_FullMethodName  = "/DNgRPC.DataNodeService/ReadBlock"
 )
 
 // DataNodeServiceClient is the client API for DataNodeService service.
@@ -146,7 +146,7 @@ func _DataNodeService_ReadBlock_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DataNodeService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "datanode_service.DataNodeService",
+	ServiceName: "DNgRPC.DataNodeService",
 	HandlerType: (*DataNodeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

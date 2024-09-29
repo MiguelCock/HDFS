@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "datanode/datanode";
+option go_package = "./DNgRPC";
 
-package datanode_service;
+package DNgRPC;
 
 service DataNodeService {
   //store a block of data

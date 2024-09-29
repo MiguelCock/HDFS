@@ -24,21 +24,22 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x64\x61tanode_service.proto\"3\n\x11WriteBlockRequest\x12\x10\n\x08\x62lock_id\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x02 \x01(\x0c\"$\n\x12WriteBlockResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"$\n\x10ReadBlockRequest\x12\x10\n\x08\x62lock_id\x18\x01 \x01(\t\"1\n\x11ReadBlockResponse\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\x0e\n\x06status\x18\x02 \x01(\t2|\n\x0f\x44\x61taNodeService\x12\x35\n\nWriteBlock\x12\x12.WriteBlockRequest\x1a\x13.WriteBlockResponse\x12\x32\n\tReadBlock\x12\x11.ReadBlockRequest\x1a\x12.ReadBlockResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x64\x61tanode_service.proto\x12\x06\x44NgRPC\"3\n\x11WriteBlockRequest\x12\x10\n\x08\x62lock_id\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x02 \x01(\x0c\"$\n\x12WriteBlockResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"$\n\x10ReadBlockRequest\x12\x10\n\x08\x62lock_id\x18\x01 \x01(\t\"1\n\x11ReadBlockResponse\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\x0e\n\x06status\x18\x02 \x01(\t2\x98\x01\n\x0f\x44\x61taNodeService\x12\x43\n\nWriteBlock\x12\x19.DNgRPC.WriteBlockRequest\x1a\x1a.DNgRPC.WriteBlockResponse\x12@\n\tReadBlock\x12\x18.DNgRPC.ReadBlockRequest\x1a\x19.DNgRPC.ReadBlockResponseB\nZ\x08./DNgRPCb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'datanode_service_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_WRITEBLOCKREQUEST']._serialized_start=26
-  _globals['_WRITEBLOCKREQUEST']._serialized_end=77
-  _globals['_WRITEBLOCKRESPONSE']._serialized_start=79
-  _globals['_WRITEBLOCKRESPONSE']._serialized_end=115
-  _globals['_READBLOCKREQUEST']._serialized_start=117
-  _globals['_READBLOCKREQUEST']._serialized_end=153
-  _globals['_READBLOCKRESPONSE']._serialized_start=155
-  _globals['_READBLOCKRESPONSE']._serialized_end=204
-  _globals['_DATANODESERVICE']._serialized_start=206
-  _globals['_DATANODESERVICE']._serialized_end=330
+  _globals['DESCRIPTOR']._loaded_options = None
+  _globals['DESCRIPTOR']._serialized_options = b'Z\010./DNgRPC'
+  _globals['_WRITEBLOCKREQUEST']._serialized_start=34
+  _globals['_WRITEBLOCKREQUEST']._serialized_end=85
+  _globals['_WRITEBLOCKRESPONSE']._serialized_start=87
+  _globals['_WRITEBLOCKRESPONSE']._serialized_end=123
+  _globals['_READBLOCKREQUEST']._serialized_start=125
+  _globals['_READBLOCKREQUEST']._serialized_end=161
+  _globals['_READBLOCKRESPONSE']._serialized_start=163
+  _globals['_READBLOCKRESPONSE']._serialized_end=212
+  _globals['_DATANODESERVICE']._serialized_start=215
+  _globals['_DATANODESERVICE']._serialized_end=367
 # @@protoc_insertion_point(module_scope)

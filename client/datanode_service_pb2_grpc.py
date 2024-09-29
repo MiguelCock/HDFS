@@ -35,12 +35,12 @@ class DataNodeServiceStub(object):
             channel: A grpc.Channel.
         """
         self.WriteBlock = channel.unary_unary(
-                '/DataNodeService/WriteBlock',
+                '/DNgRPC.DataNodeService/WriteBlock',
                 request_serializer=datanode__service__pb2.WriteBlockRequest.SerializeToString,
                 response_deserializer=datanode__service__pb2.WriteBlockResponse.FromString,
                 _registered_method=True)
         self.ReadBlock = channel.unary_unary(
-                '/DataNodeService/ReadBlock',
+                '/DNgRPC.DataNodeService/ReadBlock',
                 request_serializer=datanode__service__pb2.ReadBlockRequest.SerializeToString,
                 response_deserializer=datanode__service__pb2.ReadBlockResponse.FromString,
                 _registered_method=True)
@@ -78,9 +78,9 @@ def add_DataNodeServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'DataNodeService', rpc_method_handlers)
+            'DNgRPC.DataNodeService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('DataNodeService', rpc_method_handlers)
+    server.add_registered_method_handlers('DNgRPC.DataNodeService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -101,7 +101,7 @@ class DataNodeService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/DataNodeService/WriteBlock',
+            '/DNgRPC.DataNodeService/WriteBlock',
             datanode__service__pb2.WriteBlockRequest.SerializeToString,
             datanode__service__pb2.WriteBlockResponse.FromString,
             options,
@@ -128,7 +128,7 @@ class DataNodeService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/DataNodeService/ReadBlock',
+            '/DNgRPC.DataNodeService/ReadBlock',
             datanode__service__pb2.ReadBlockRequest.SerializeToString,
             datanode__service__pb2.ReadBlockResponse.FromString,
             options,
