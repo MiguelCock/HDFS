@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -73,28 +72,20 @@ func (dn *DataNode) heartBeat() {
 
 // -------------------- DELETE BLOCK --------------------
 func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {
-	filePath := strings.TrimPrefix(r.URL.Path, "/delete_block/")
+	blockID := r.URL.Query().Get("block_id")
 
-	if filePath == "" {
-		http.Error(w, "File path not provided", http.StatusBadRequest)
-		return
-	}
-
-	if _, exist := dn.Files[filePath]; !exist {
+	if _, exist := dn.Files[blockID]; !exist {
 		http.Error(w, "File Not found", http.StatusNotFound)
 		return
 	}
 
-	os.Remove(filePath)
+	os.Remove(blockID)
 
-	delete(dn.Files, filePath)
+	delete(dn.Files, blockID)
 
 	w.WriteHeader(http.StatusOK)
-}
 
-// -------------------- CHECK SUM --------------------
-func (dn *DataNode) checkSumVerification(w http.ResponseWriter, r *http.Request) {}
-
-// -------------------- REPLICATE BLOCK --------------------
-func (dn *DataNode) replicatetBlock(w http.ResponseWriter, r *http.Request) {
+	response := Response{Status: "Bloque eliminado exitosamente"}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

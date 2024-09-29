@@ -31,6 +31,10 @@ type DataNode struct {
 	dngrcp.UnimplementedDataNodeServiceServer
 }
 
+type Response struct {
+	Status string `json:"status"`
+}
+
 // ---------- CRETATE NEW DATA NODE ----------
 func NewDataNode(filename string) *DataNode {
 	var dn DataNode
@@ -91,7 +95,6 @@ func (dn *DataNode) StartRest() error {
 
 	http.HandleFunc("/delete_block/", dn.deleteBlock)
 	http.HandleFunc("/replicatet_block", dn.replicatetBlock)
-	http.HandleFunc("/checksum", dn.checkSumVerification)
 
 	log.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
