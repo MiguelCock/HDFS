@@ -26,14 +26,14 @@ class NameNode:
         #inicializamos las rutas del API REST
         self.define_routes()
 
-    def generate_user_token(username, password):
+    def generate_user_token(self, username, password):
         #concatenamos el nombre de usuario y la contraseña
         text_to_hash = f"{username}|{password}"
         #calculamos el hash de 16 bits
         hash_object = hashlib.md5(text_to_hash.encode())
         return hash_object.hexdigest()[:16]
     
-    def generate_block_id(file_path, part_number):
+    def generate_block_id(self, file_path, part_number):
         #concatenamos la ruta completa con la parte correspondiente
         text_to_hash = f"{file_path}.part{part_number}"
         #calculamos el hash de 16 bits
