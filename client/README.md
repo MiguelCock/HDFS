@@ -48,15 +48,20 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
    - **Descripción**: Solicita al **NameNode** la creación de un archivo vacío en el sistema de archivos.
    - **Llama a**:
      - **NameNode** a través de `/create_file` (API REST).
-   - **Parámetros**:
+   - **Parámetros PARA EL NAMENODE**:
      - `path` (string): La ruta del archivo que se va a crear.
      - `token` (string): Token de autenticación.
+   - **Parámetros PARA LOS DATANODES**:
+     - Estrucutra de petición **WriteBlockRequest**:
+       - `block_id` (string): El identificador del bloque que se va a almacenar.
+       - `data` (binary): Los datos del bloque a almacenar.
    - **Retorno recibido POR EL NAMENODE**:
      - JSON con la lista de bloques y sus ubicaciones:
        ```json
-       {"blocks": [
-         {"block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
-         {"block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
+       {"blocks_quantity": 3,
+        "blocks": [
+         {"block_index": 1, "block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_index": 2, "block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
          ...
        ]}
        ```
@@ -71,26 +76,30 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
    - **Llama a**:
      - **NameNode** a través de `/get_block_locations` (API REST) para obtener la lista de **DataNodes** que tienen los bloques del archivo.
      - **DataNode** a través de `read_block` (gRPC) para descargar los bloques desde los **DataNodes** correspondientes.
-   - **Parámetros**:
+   - **Parámetros PARA EL NAMENODE**:
      - `path` (string): La ruta del archivo que se va a leer.
      - `token` (string): Token de autenticación.
+   - **Parámetros PARA LOS DATANODES**:
+     - Estrucutra de petición **ReadBlockRequest**:
+       - `block_id` (string): El identificador del bloque que se quiere leer.
    - **Retorno recibido POR EL NAMENODE**:
      - JSON con la lista de bloques y sus ubicaciones:
        ```json
-       {"blocks": [
-         {"block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
-         {"block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
+       {"blocks_quantity": 3,
+        "blocks": [
+         {"block_index": 1, "block_id": "block1_id", "datanodes": [{"ip": "ip1", "port": 5001}, {"ip": "ip2", "port": 5001}]},
+         {"block_index": 2, "block_id": "block2_id", "datanodes": [{"ip": "ip3", "port": 5001}, {"ip": "ip4", "port": 5001}]},
          ...
        ]}
        ```
    - **Retorno recibido POR CADA DATANODE**:
-      - Estructura de respuesta con los datos del bloque:
-        ```json
-        {"data": "binary_data"}
-        ```
+      - Estructura de respuesta **ReadBlockResponse** con los datos del bloque:
+       ```json
+       { "data": "binary_data", "status": "Bloque leído exitosamente" }
+       ```
 
 5. **Delete File (rm)**
-   - **Descripción**: Elimina un archivo del sistema de archivos distribuido, tanto en el **NameNode** como en los **DataNodes**.
+   - **Descripción**: Elimina un archivo del sistema de archivos distribuido, tanto en el **NameNode** como en los **DataNodes**. En este caso, el **NameNode** se encarga de eliminar los metadatos del archivo y llamar a los **DataNodes** para que eliminen los bloques.
    - **Llama a**:
      - **NameNode** a través de `/delete_file` (API REST).
    - **Parámetros**:

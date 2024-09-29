@@ -17,9 +17,10 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Retorno**:
      - JSON con la lista de ips y puertos de los **DataNodes** al que **Client** debe mandarle los bloques del archivo:
        ```json
-       {"blocks": [
-         {"block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
-         {"block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
+       {"blocks_quantity": 3,
+        "blocks": [
+         {"block_index": 1, "block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_index": 2, "block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
          ...
        ]}
        ```
@@ -86,9 +87,10 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Retorno**:
      - JSON con la lista de **DataNodes** (y su info) donde se encuentran los bloques del archivo:
        ```json
-       {"blocks": [
-         {"block_id": "block1_id", "datanodes": [{"ip": "ip1", "port": 5001}, {"ip": "ip2", "port": 5001}]},
-         {"block_id": "block2_id", "datanodes": [{"ip": "ip3", "port": 5001}, {"ip": "ip4", "port": 5001}]},
+       {"blocks_quantity": 3,
+        "blocks": [
+         {"block_index": 1, "block_id": "block1_id", "datanodes": [{"ip": "ip1", "port": 5001}, {"ip": "ip2", "port": 5001}]},
+         {"block_index": 2, "block_id": "block2_id", "datanodes": [{"ip": "ip3", "port": 5001}, {"ip": "ip4", "port": 5001}]},
          ...
        ]}
        ```

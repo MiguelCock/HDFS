@@ -41,26 +41,23 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
    - **Descripción**: Proporciona los datos de un bloque almacenado en este **DataNode**.
    - **Es llamado por**: **Client**, cuando necesita leer los datos de un bloque.
    - **Parámetros**:
-     - `block_id` (string): El identificador del bloque que se quiere leer.
+     - Estrucutra de petición **ReadBlockRequest**:
+       - `block_id` (string): El identificador del bloque que se quiere leer.
    - **Retorno**:
      - Estructura de respuesta **ReadBlockResponse** con los datos del bloque:
-
-       ```json
-       { "data": "binary_data", "status": "Bloque leído exitosamente" }
-       ```
+        - `data` (binary): Los datos del bloque.
+        - `status` (string): Mensaje de éxito o error.
 
 2. **write_block**
    - **Descripción**: Almacena un bloque en este **DataNode**, enviado por un **Client**.
    - **Es llamado por**: **Client**, cuando está subiendo un archivo y necesita almacenar un bloque.
    - **Parámetros**:
-     - `block_id` (string): El identificador del bloque.
-     - `data` (binary): Los datos del bloque a almacenar.
+     - Estrucutra de petición **WriteBlockRequest**:
+       - `block_id` (string): El identificador del bloque.
+       - `data` (binary): Los datos del bloque a almacenar.
    - **Retorno**:
      - Estructura de respuesta **WriteBlockResponse** indicando éxito o error:
-
-       ```json
-       { "status": "Bloque almacenado exitosamente" }
-       ```
+       - `status` (string): Mensaje de éxito o error.
 
 ---
 
