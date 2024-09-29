@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-
-	"github.com/MiguelCock/HDFS/dataNode/datanode"
+	"github.com/MiguelCock/HDFS/dataNode/DN"
 )
 
 func main() {
@@ -12,9 +11,19 @@ func main() {
 
 	dn := datanode.NewDataNode("bootstrap.json")
 
-	if err := dn.StartRest(); err != nil {
-		log.Fatal(err)
-	}
+	go func() {
+		if err := dn.StartRest(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	dn.StartGRPC()
+	go func() {
+		if err := dn.StartGRPC(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	fmt.Println("Press Enter to exit...")
+	fmt.Scanln()
+	fmt.Println("Bye! :)")
 }

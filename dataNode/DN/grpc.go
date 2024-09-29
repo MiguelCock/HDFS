@@ -1,4 +1,4 @@
-package datanode
+package DN
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/MiguelCock/HDFS/dataNode/datanode/dngrcp"
+	"github.com/MiguelCock/HDFS/dataNode/DN/DNgRPC"
 	"google.golang.org/grpc"
 )
 

@@ -1,4 +1,4 @@
-package datanode
+package DN
 
 import (
 	"bytes"
