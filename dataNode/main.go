@@ -18,9 +18,7 @@ func main() {
 	}()
 
 	go func() {
-		if err := dn.StartGRPC(); err != nil {
-			log.Fatal(err)
-		}
+		dn.StartGRPC();
 	}()
 
 	fmt.Println("Press Enter to exit...")
