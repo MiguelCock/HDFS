@@ -28,7 +28,7 @@ type DataNode struct {
 	HeartbeatInterval  int    `json:"heartbeat_interval"`
 	BlockCheckInterval int    `json:"block_check_interval"`
 	Blocks             map[string]BlockMetadata
-	dngrcp.UnimplementedDataNodeServiceServer
+	DNgRPC.UnimplementedDataNodeServiceServer
 }
 
 type Response struct {
@@ -113,7 +113,7 @@ func (dn *DataNode) StartGRPC() {
 
 	server := grpc.NewServer()
 
-	dngrcp.RegisterDataNodeServiceServer(server, dn)
+	DNgRPC.RegisterDataNodeServiceServer(server, dn)
 
 	log.Printf("gRPC server running on %s:%d", dn.IP, grpcPort)
 	if err := server.Serve(lis); err != nil {

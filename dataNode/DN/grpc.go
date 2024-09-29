@@ -13,7 +13,7 @@ import (
 )
 
 // -------------------- WRITE BLOCK --------------------
-func (dn *DataNode) WriteBlock(ctx context.Context, req *dngrcp.WriteBlockRequest) (*dngrcp.WriteBlockResponse, error) {
+func (dn *DataNode) WriteBlock(ctx context.Context, req *DNgRPC.WriteBlockRequest) (*DNgRPC.WriteBlockResponse, error) {
 	blockID := req.GetBlockId()
 	data := req.GetData()
 
@@ -27,21 +27,21 @@ func (dn *DataNode) WriteBlock(ctx context.Context, req *dngrcp.WriteBlockReques
 
 	os.WriteFile(blockID, data, 0644)
 
-	return &dngrcp.WriteBlockResponse{Status: "Block stored successfully"}, nil
+	return &DNgRPC.WriteBlockResponse{Status: "Block stored successfully"}, nil
 }
 
 // -------------------- READ BLOCK --------------------
-func (dn *DataNode) ReadBlock(ctx context.Context, req *dngrcp.ReadBlockRequest) (*dngrcp.ReadBlockResponse, error) {
+func (dn *DataNode) ReadBlock(ctx context.Context, req *DNgRPC.ReadBlockRequest) (*DNgRPC.ReadBlockResponse, error) {
 	blockID := req.GetBlockId()
 
 	_, exists := dn.Blocks[blockID]
 	if !exists {
-		return &dngrcp.ReadBlockResponse{Status: "Block not found"}, nil
+		return &DNgRPC.ReadBlockResponse{Status: "Block not found"}, nil
 	}
 
 	data, _ := os.ReadFile(blockID)
 
-	return &dngrcp.ReadBlockResponse{Data: data, Status: "Block read successfully"}, nil
+	return &DNgRPC.ReadBlockResponse{Data: data, Status: "Block read successfully"}, nil
 }
 
 // -------------------- REPLICATE BLOCK --------------------
@@ -55,10 +55,10 @@ func (dn *DataNode) replicateBlock(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	client := dngrcp.NewDataNodeServiceClient(conn)
+	client := DNgRPC.NewDataNodeServiceClient(conn)
 
 	block_data, _ := os.ReadFile(blockID)
-	writeRes, err := client.WriteBlock(context.Background(), &dngrcp.WriteBlockRequest{
+	writeRes, err := client.WriteBlock(context.Background(), &DNgRPC.WriteBlockRequest{
 		BlockId: blockID,
 		Data:    block_data,
 	})
