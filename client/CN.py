@@ -73,7 +73,7 @@ class Client:
                 start_index = (block['block_index'] - 1) * block_size
                 end_index = min(start_index + block_size, size)
                 block_data = file_data[start_index:end_index]
-                self.send_block_to_datanode(block['datanode']['ip'], block['datanode']['port'], block['block_id'], block_data)
+                self.send_block_to_datanode(block['datanode']['ip'], block['datanode']['port']+1, block['block_id'], block_data)
         else:
             try:
                 print(response.json()['message'])
@@ -96,7 +96,7 @@ class Client:
                 block_data = None
                 #intentamos leer el bloque desde todos los DataNodes disponibles
                 for datanode in block['datanodes']:
-                    block_data = self.read_block_from_datanode(datanode['ip'], datanode['port'], block['block_id'])
+                    block_data = self.read_block_from_datanode(datanode['ip'], datanode['port']+1, block['block_id'])
                     if block_data:  #si pudimos leer, salimos del bucle
                         break
                 
