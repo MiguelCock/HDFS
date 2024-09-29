@@ -1,14 +1,18 @@
-- PARA CONFIGURAR MÁQUINA EC2 (Python: Client | NameNode):
+## PARA CONFIGURAR MÁQUINA EC2 
+
+### (Python: Client | NameNode):
 ```bash
 sudo apt-get update
-sudo apt-get install python3-pip
 sudo apt-get install git
+sudo apt-get install python3-pip
 git clone https://github.com/MiguelCock/HDFS
 cd HDFS
-pip3 install -r requirements.txt
+sudo pip3 install --break-system-packages -r requirements.txt
+sudo chmod +x run.sh
+sudo chmod +x bootstrap.sh
 ```
 
-- PARA CONFIGURAR MÁQUINA EC2 (Go: DataNode):
+### (Go: DataNode):
 ```bash
 sudo apt-get update
 sudo apt-get install git
@@ -18,9 +22,18 @@ cd HDFS
 echo "export GOPATH=$HOME/go" >> ~/.bashrc
 echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> ~/.bashrc
 source ~/.bashrc
+sudo chmod +x run.sh
+sudo chmod +x bootstrap.sh
 ```
 
-- CAMBIAR BOOTSTRAP RÁPIDO DE MÁQUINA YA MONTADA:
+## CAMBIAR BOOTSTRAP RÁPIDO DE MÁQUINA YA MONTADA:
+
+### Usando el .sh
+```bash
+./bootstrap.sh
+```
+
+### Manualmente
 ```bash
 cd HDFS
 cd <client|nameNode|dataNode>
@@ -28,7 +41,16 @@ git pull
 sudo nano bootstrap.json
 ```
 
-- INICIO RÁPIDO DE MÁQUINA YA MONTADA (Python: Client | NameNode):
+## INICIO RÁPIDO DE MÁQUINA YA MONTADA 
+
+### Usando el .sh
+```bash
+./run.sh
+```
+
+### Manualmente
+
+#### (Python: Client | NameNode):
 ```bash
 cd HDFS
 cd <client|nameNode>
@@ -36,7 +58,7 @@ git pull
 python3 main.py
 ```
 
-- INICIO RÁPIDO DE MÁQUINA YA MONTADA (Go: DataNode):
+#### (Go: DataNode):
 ```bash
 cd HDFS
 cd dataNode
@@ -45,22 +67,22 @@ go build main.go
 ./main
 ```
 
+## IPs:  
 
-- IPs
-client: 
+**client:** 
 172.31.90.113
 
-nameNode: 
+**nameNode:** 
 172.31.94.180
 
-dataNode1: 
+**dataNode1:** 
 172.31.92.212
 
-dataNode2: 
+**dataNode2:** 
 172.31.83.103
 
-dataNode3: 
+**dataNode3:** 
 172.31.88.165
 
-dataNode4: 
+**dataNode4:** 
 172.31.82.61
