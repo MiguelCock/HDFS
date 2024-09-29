@@ -39,9 +39,9 @@ func (dn *DataNode) blockReport() {
 
 		jsonData, _ := json.Marshal(body)
 
-		resp, err := http.Post(url, "aplication/json", bytes.NewBuffer(jsonData))
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 		if err != nil {
-			log.Printf("Failed to send heartbeat request: %v", err)
+			log.Printf("Failed to send block report request: %v", err)
 		}
 
 		log.Printf("Response Status: %s\n", resp.Status)
@@ -50,7 +50,7 @@ func (dn *DataNode) blockReport() {
 	}
 }
 
-// -------------------- HEART BEAT --------------------
+// -------------------- HEARTBEAT --------------------
 func (dn *DataNode) heartBeat() {
 	ticker := time.NewTicker(time.Duration(dn.HeartbeatInterval) * time.Second)
 	defer ticker.Stop()
@@ -63,7 +63,7 @@ func (dn *DataNode) heartBeat() {
 		}
 		jsonData, _ := json.Marshal(body)
 
-		resp, err := http.Post(url, "aplication/json", bytes.NewBuffer(jsonData))
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 		if err != nil {
 			log.Printf("Failed to send heartbeat request: %v", err)
 		}
