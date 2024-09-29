@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type FileMetadata struct {
+type BlockMetadata struct {
 	Checksum string
 	Size     int64
 }
@@ -27,7 +27,7 @@ type DataNode struct {
 	BlockSize          int    `json:"block_size"`
 	HeartbeatInterval  int    `json:"heartbeat_interval"`
 	BlockCheckInterval int    `json:"block_check_interval"`
-	Files              map[string]FileMetadata
+	Blocks             map[string]BlockMetadata
 	dngrcp.UnimplementedDataNodeServiceServer
 }
 
@@ -46,7 +46,7 @@ func NewDataNode(filename string) *DataNode {
 
 	decoder.Decode(&dn)
 
-	dn.Files = make(map[string]FileMetadata)
+	dn.Blocks = make(map[string]BlockMetadata)
 
 	return &dn
 }
@@ -94,7 +94,7 @@ func (dn *DataNode) StartRest() error {
 	go dn.blockReport()
 
 	http.HandleFunc("/delete_block/", dn.deleteBlock)
-	http.HandleFunc("/replicatet_block", dn.replicatetBlock)
+	http.HandleFunc("/replicate_block", dn.replicateBlock)
 
 	log.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))

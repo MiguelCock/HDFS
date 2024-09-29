@@ -70,6 +70,13 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
    - **Parámetros**:
      - `datanode_ip` (string): La IP del **DataNode**.
      - `datanode_port` (int): El puerto del **DataNode**.
+   - **En forma de**:
+      ```json
+      {
+        "datanode_ip": "datanode_ip",
+        "datanode_port": "datanode_port"
+      }
+      ```
    - **Retorno recibido**:
      - JSON con el tamaño de bloque y los intervalos de heartbeat y block report:
 
@@ -86,7 +93,15 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
    - **Llama a**:
      - **NameNode** a través del endpoint `/heartbeat` (API REST).
    - **Parámetros**:
-     - `datanode_id` (string): El identificador de este **DataNode**.
+     - `datanode_ip` (string): La ip de este **DataNode**.
+     - `datanode_port` (int): El puerto del **DataNode**.
+   - **En forma de**:
+      ```json
+      {
+        "datanode_ip": "datanode_ip",
+        "datanode_port": "datanode_port"
+      }
+      ```
    - **Retorno recibido**:
      - Ninguno.
 
@@ -95,14 +110,16 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
    - **Llama a**:
      - **NameNode** a través del endpoint `/block_report` (API REST).
    - **Parámetros**:
-     - `datanode_id` (string): El identificador de ese **DataNode**.
+     - `datanode_ip` (string): La ip de ese **DataNode**.
+     - `datanode_port` (int): El puerto del **DataNode**.
      - `block_list` (list): Lista de bloques almacenados.
      - `checksum_list` (list): Lista de checksums de los bloques.
      - **En forma de**:
 
         ```json
         {
-          "datanode_id": "datanode_id",
+          "datanode_ip": "datanode_ip",
+          "datanode_port": "datanode_port",
           "blocks": [
             {"block_id": "block1_id", "checksum": "block1_checksum"},
             {"block_id": "block2_id", "checksum": "block2_checksum"},

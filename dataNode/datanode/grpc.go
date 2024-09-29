@@ -23,7 +23,7 @@ func (dn *DataNode) WriteBlock(ctx context.Context, req *dngrcp.WriteBlockReques
 
 	hashres := hash.Sum(nil)
 
-	dn.Files[blockID] = FileMetadata{Checksum: string(hashres), Size: int64(len(data))}
+	dn.Blocks[blockID] = BlockMetadata{Checksum: string(hashres), Size: int64(len(data))}
 
 	os.WriteFile(blockID, data, 0644)
 
@@ -34,7 +34,7 @@ func (dn *DataNode) WriteBlock(ctx context.Context, req *dngrcp.WriteBlockReques
 func (dn *DataNode) ReadBlock(ctx context.Context, req *dngrcp.ReadBlockRequest) (*dngrcp.ReadBlockResponse, error) {
 	blockID := req.GetBlockId()
 
-	_, exists := dn.Files[blockID]
+	_, exists := dn.Blocks[blockID]
 	if !exists {
 		return &dngrcp.ReadBlockResponse{Status: "Block not found"}, nil
 	}
@@ -45,7 +45,7 @@ func (dn *DataNode) ReadBlock(ctx context.Context, req *dngrcp.ReadBlockRequest)
 }
 
 // -------------------- REPLICATE BLOCK --------------------
-func (dn *DataNode) replicatetBlock(w http.ResponseWriter, r *http.Request) {
+func (dn *DataNode) replicateBlock(w http.ResponseWriter, r *http.Request) {
 	blockID := r.URL.Query().Get("block_id")
 	target_datanode := r.URL.Query().Get("target_datanode")
 
@@ -57,10 +57,10 @@ func (dn *DataNode) replicatetBlock(w http.ResponseWriter, r *http.Request) {
 
 	client := dngrcp.NewDataNodeServiceClient(conn)
 
-	file, _ := os.ReadFile(blockID)
+	block_data, _ := os.ReadFile(blockID)
 	writeRes, err := client.WriteBlock(context.Background(), &dngrcp.WriteBlockRequest{
 		BlockId: blockID,
-		Data:    file,
+		Data:    block_data,
 	})
 	if err != nil {
 		log.Fatalf("Error writing block: %v", err)

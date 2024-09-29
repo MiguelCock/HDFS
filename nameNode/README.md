@@ -100,13 +100,14 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Descripción**: Envía un informe al **NameNode** con los bloques almacenados en este **DataNode**.
    - **Es llamado por**: **DataNode** mismo (periódicamente).
    - **Parámetros**:
-     - `datanode_id` (string): El identificador de ese **DataNode**.
+     - `datanode_ip` (string): La ip de ese **DataNode**.
+     - `datanode_port` (int): El puerto del **DataNode**.
      - `block_list` (list): Lista de los ids bloques almacenados en el **DataNode**.
      - `checksum_list` (list): Lista de checksums de los bloques para verificar la integridad.
      - **En forma de**
-
         ```json
-        {"datanode_id": "datanode_id",
+        {"datanode_ip": "datanode_ip",
+         "datanode_port": "datanode_port",
          "blocks": [
            {"block_id": "block1_id", "checksum":"block1_checksum"},
            {"block_id": "block2_id", "checksum":"block2_checksum"},
@@ -121,7 +122,13 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Descripción**: **DataNode** envía un heartbeat para informar que este sigue operativo.
    - **Es llamado por**: **DataNode** mismo (periódicamente).
    - **Parámetros**:
-     - `datanode_id` (string): El identificador de ese **DataNode**.
+     - `datanode_ip` (string): La ip de ese **DataNode**.
+     - `datanode_port` (int): El puerto del **DataNode**.
+   - **En forma de**:
+     ```json
+     {"datanode_ip": "datanode_ip",
+      "datanode_port": "datanode_port"}
+     ```
    - **Retorno**:
      - Ninguno.
 

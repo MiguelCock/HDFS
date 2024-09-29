@@ -11,7 +11,7 @@ import (
 )
 
 // -------------------- BLOCK REPORT --------------------
-type FileChecksum struct {
+type BlockChecksum struct {
 	Block_id string `json:"block_id"`
 	Checksum string `json:"checksum"`
 }
@@ -23,18 +23,19 @@ func (dn *DataNode) blockReport() {
 	url := fmt.Sprintf("http://%s:%d/block_report", dn.NameNodeIP, dn.NameNodePort)
 
 	for range ticker.C {
-		var files []FileChecksum
+		var blocks []BlockChecksum
 
-		for block_id, metadata := range dn.Files {
-			files = append(files, FileChecksum{
+		for block_id, metadata := range dn.Blocks {
+			blocks = append(blocks, BlockChecksum{
 				Block_id: block_id,
 				Checksum: metadata.Checksum,
 			})
 		}
 
 		body := map[string]interface{}{
-			"datanode_id": dn.IP,
-			"blocks":      files,
+			"datanode_ip": dn.IP,
+			"datanode_port": dn.Port,
+			"blocks": blocks,
 		}
 
 		jsonData, _ := json.Marshal(body)
@@ -59,7 +60,8 @@ func (dn *DataNode) heartBeat() {
 		url := fmt.Sprintf("http://%s:%d/heartbeat", dn.NameNodeIP, dn.NameNodePort)
 
 		body := map[string]interface{}{
-			"datanode_id": dn.IP,
+			"datanode_ip": dn.IP,
+			"datanode_port": dn.Port,
 		}
 		jsonData, _ := json.Marshal(body)
 
@@ -78,14 +80,14 @@ func (dn *DataNode) heartBeat() {
 func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {
 	blockID := r.URL.Query().Get("block_id")
 
-	if _, exist := dn.Files[blockID]; !exist {
-		http.Error(w, "File Not found", http.StatusNotFound)
+	if _, exist := dn.Blocks[blockID]; !exist {
+		http.Error(w, "Block Not found", http.StatusNotFound)
 		return
 	}
 
 	os.Remove(blockID)
 
-	delete(dn.Files, blockID)
+	delete(dn.Blocks, blockID)
 
 	w.WriteHeader(http.StatusOK)
 

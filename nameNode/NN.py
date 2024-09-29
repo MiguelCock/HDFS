@@ -224,7 +224,17 @@ class NameNode:
                 return jsonify({"message": "file not found"}), 404
 
             blocks = self.block_locations[path]
-            return jsonify({"blocks_quantity": len(blocks), "blocks": blocks}), 200
+            return jsonify({
+                "blocks_quantity": len(blocks),
+                "blocks": [
+                    {
+                        "block_index": block['block_index'],
+                        "block_id": block['block_id'],
+                        "datanodes": block.get("datanodes", [])  #así aseguramos que siempre haya una lista de datanodes, aún cuando nadie lo tenga (eso sería raro XD)
+                    } for block in blocks
+                ]
+            }), 200
+
 
         @self.app.route('/register_datanode', methods=['POST'])
         def register_datanode():
@@ -279,21 +289,32 @@ class NameNode:
             if datanode_key not in self.datanodes:
                 return jsonify({"message": "DataNode not registered"}), 404
 
+            #procesamos cada bloque enviado en el block report
             for block in blocks:
                 block_id = block['block_id']
-                block_path = block['block_path']
-                if block_path not in self.block_locations:
-                    continue
+                checksum = block['checksum']
 
-                for i, stored_block in enumerate(self.block_locations[block_path]):
-                    if stored_block['block_id'] == block_id:
-                        self.block_locations[block_path][i]['datanode'] = {
-                            "ip": datanode_ip,
-                            "port": datanode_port
-                        }
-                        break
+                #verificamos si el bloque ya existe en las ubicaciones
+                block_found = False
+                for path, block_list in self.block_locations.items():
+                    for stored_block in block_list:
+                        if stored_block['block_id'] == block_id:
+                            #Si el bloque ya tiene ubicaciones, agregamos el DataNode sin reemplazar las anteriores
+                            if "datanodes" not in stored_block:
+                                stored_block['datanodes'] = []
+                            stored_block['datanodes'].append({
+                                "ip": datanode_ip,
+                                "port": datanode_port,
+                                "checksum": checksum
+                            })
+                            block_found = True
+                            break
+                
+                #si el bloque no está registrado en ningún archivo (caso raro), simplemente lo ignoramos
+                #aún no haremos nada con eso
 
             #return jsonify({"message": "block report received"}), 200
+
 
     def start_server(self):
         #iniciamos el servidor API REST con Flask
