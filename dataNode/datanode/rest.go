@@ -85,12 +85,15 @@ func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	os.Remove(blockID)
+	err := os.Remove(blockID)
+	if err != nil {
+		http.Error(w, "Failed to remove block file", http.StatusInternalServerError)
+		return
+	}
 
 	delete(dn.Blocks, blockID)
 
 	w.WriteHeader(http.StatusOK)
-
 	response := Response{Status: "Bloque eliminado exitosamente"}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)

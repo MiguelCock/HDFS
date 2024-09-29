@@ -2,6 +2,7 @@ import json
 from flask import Flask, request, jsonify
 import hashlib
 import random
+import requests
 
 class NameNode:
     def __init__(self, bootstrap_path):
@@ -131,7 +132,6 @@ class NameNode:
 
             return jsonify({"blocks_quantity": blocks_quantity, "blocks": blocks}), 200
 
-
         @self.app.route('/delete_file', methods=['DELETE'])
         def delete_file():
             #eliminamos un archivo del sistema
@@ -147,6 +147,26 @@ class NameNode:
             if path not in self.filesystem:
                 return jsonify({"message": "file not found"}), 404
 
+            #obtenemos la lista de bloques del archivo
+            blocks = self.filesystem[path]
+
+            #para cada bloque, contactamos a cada DataNode implicado y le pedimos que elimine el bloque
+            for block in blocks:
+                for datanode in block['datanodes']:
+                    datanode_ip = datanode['ip']
+                    datanode_port = datanode['port']
+                    block_id = block['block_id']
+                    url = f"http://{datanode_ip}:{datanode_port}/delete_block"
+                    try:
+                        response = requests.delete(url, params={"block_id": block_id})
+                        if response.status_code == 200:
+                            print(f"Block {block_id} deleted from DataNode {datanode_ip}:{datanode_port}")
+                        else:
+                            print(f"Failed to delete block {block_id} from DataNode {datanode_ip}:{datanode_port}")
+                    except Exception as e:
+                        print(f"Error contacting DataNode {datanode_ip}:{datanode_port}: {e}")
+
+            #eliminamos el archivo del sistema después de haber eliminado todos los bloques
             del self.filesystem[path]
             del self.block_locations[path]
 

@@ -82,7 +82,6 @@ class Client:
 
     def read_file(self, file_path):
         #llamamos al NameNode para obtener las ubicaciones de los bloques
-        #luego los recuperamos desde los DataNodes
         headers = {'Authorization': f'{self.token}'}
         response = requests.get(f'http://{self.namenode_ip}:{self.namenode_port}/get_block_locations', params={
             'path': file_path
@@ -92,9 +91,22 @@ class Client:
             data = response.json()
             blocks = data['blocks']
             file_data = b''
+
             for block in blocks:
-                file_data += self.read_block_from_datanode(block['datanodes'][0]['ip'], block['datanodes'][0]['port'], block['block_id'])
-            #Aquí puedes escribir el archivo a disco si lo deseas
+                block_data = None
+                #intentamos leer el bloque desde todos los DataNodes disponibles
+                for datanode in block['datanodes']:
+                    block_data = self.read_block_from_datanode(datanode['ip'], datanode['port'], block['block_id'])
+                    if block_data:  #si pudimos leer, salimos del bucle
+                        break
+                
+                if block_data:
+                    file_data += block_data
+                else:
+                    print(f"Failed to read block {block['block_id']} from all DataNodes")
+                    return  #si no se pudo leer un bloque, pailas, cancelamos la operación de lectura completa
+
+            #aquí escribimos el archivo a disco
             with open(f'downloaded_{file_path}', 'wb') as f:
                 f.write(file_data)
             print('File downloaded successfully')
