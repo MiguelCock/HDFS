@@ -55,11 +55,10 @@ func (dn *DataNode) blockReport() {
 			continue
 		}
 
-		log.Printf("Response Status: %s\n", resp.Status)
-
-		// Verificar si hay un mensaje en la respuesta
 		if message, exists := respData["message"]; exists {
 			log.Printf("NameNode message: %s", message)
+		} else {
+			log.Printf("Response Status: %s", resp.Status)
 		}
 	}
 }
@@ -93,10 +92,10 @@ func (dn *DataNode) heartBeat() {
 			continue
 		}
 
-		log.Printf("Response Status: %s\n", resp.Status)
-
 		if message, exists := respData["message"]; exists {
 			log.Printf("NameNode message: %s", message)
+		} else {
+			log.Printf("Response Status: %s", resp.Status)
 		}
 	}
 }

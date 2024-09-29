@@ -300,19 +300,28 @@ class NameNode:
             data = request.json
             datanode_ip = data.get('datanode_ip')
             datanode_port = data.get('datanode_port')
-            blocks = data.get('blocks')
+            blocks = data.get('blocks', [])  #Esto garantiza que tengamos al menos una lista vacía
 
-            if not datanode_ip or not datanode_port or not blocks:
-                return jsonify({"message": "missing DataNode IP, port or blocks"}), 400
+            #verificación de los campos obligatorios
+            if not datanode_ip or not datanode_port:
+                return jsonify({"message": "missing DataNode IP or port"}), 400
 
             datanode_key = f"{datanode_ip}:{datanode_port}"
             if datanode_key not in self.datanodes:
                 return jsonify({"message": "DataNode not registered"}), 404
 
-            #procesamos cada bloque enviado en el block report
+            #si no hay bloques reportados, retornamos un mensaje indicando que el reporte está vacío
+            if not blocks:
+                return jsonify({"message": "block report is empty"}), 200
+
+            #procesamos los bloques enviados, si es que hay alguno
             for block in blocks:
-                block_id = block['block_id']
-                checksum = block['checksum']
+                block_id = block.get('block_id')
+                checksum = block.get('checksum')
+
+                #validamos que se hayan enviado correctamente los datos del bloque
+                if not block_id or not checksum:
+                    continue
 
                 #verificamos si el bloque ya existe en las ubicaciones
                 block_found = False
@@ -329,11 +338,9 @@ class NameNode:
                             })
                             block_found = True
                             break
-                
-                #si el bloque no está registrado en ningún archivo (caso raro), simplemente lo ignoramos
-                #aún no haremos nada con eso
 
-            #return jsonify({"message": "block report received"}), 200
+            #si no hay bloques, el ciclo for simplemente no hará nada, lo cual es correcto.
+            return jsonify({"message": "block report received"}), 200
 
 
     def start_server(self):
