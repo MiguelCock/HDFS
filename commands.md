@@ -89,3 +89,14 @@ go build main.go
 
 **dataNode4:** 
 172.31.82.61
+
+
+## Montar commit rápidamente:
+
+```bash
+git checkout main
+git pull
+git merge esteban
+git push
+git checkout esteban
+```

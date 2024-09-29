@@ -53,6 +53,10 @@ class NameNode:
             time.sleep(self.replication_check_interval)  #esperamos el tiempo puesto en el bootstrap
             print("Checking block replication status...")
 
+            #DEBUG
+            print('block_locations:', self.block_locations)
+            #END DEBUG
+
             for path, blocks in self.block_locations.items():
                 for block in blocks:
                     if len(block.get('datanodes', [])) < 2:
