@@ -8,17 +8,19 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
 
 1. **/create_file**
    - **Método**: `POST`
-   - **Descripción**: Crea un nuevo archivo en el sistema de archivos distribuidos.
+   - **Descripción**: El cliente sube un nuevo archivo al sistema de archivos distribuidos.
    - **Es llamado por**: **Client**, cuando el usuario desea crear un archivo.
    - **Parámetros**:
      - `path` (string): La ruta completa del archivo.
+     - `size` (int): Tamaño en bytes del archivo.
      - `token` (string): Token de autenticación.
    - **Retorno**:
      - JSON con la lista de ips y puertos de los **DataNodes** al que **Client** debe mandarle los bloques del archivo:
        ```json
        {"blocks": [
-         {"block_id": "block1", "datanode": {"ip": "ip1", "port": 5001}},
-         {"block_id": "block2", "datanode": {"ip": "ip2", "port": 5001}}
+         {"block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
+         ...
        ]}
        ```
 
@@ -85,8 +87,9 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
      - JSON con la lista de **DataNodes** (y su info) donde se encuentran los bloques del archivo:
        ```json
        {"blocks": [
-         {"block_id": "block1", "datanodes": [{"ip": "ip1", "port": 5001}, {"ip": "ip2", "port": 5001}]},
-         {"block_id": "block2", "datanodes": [{"ip": "ip3", "port": 5001}, {"ip": "ip4", "port": 5001}]}
+         {"block_id": "block1_id", "datanodes": [{"ip": "ip1", "port": 5001}, {"ip": "ip2", "port": 5001}]},
+         {"block_id": "block2_id", "datanodes": [{"ip": "ip3", "port": 5001}, {"ip": "ip4", "port": 5001}]},
+         ...
        ]}
        ```
 
@@ -96,8 +99,18 @@ El **NameNode** es responsable de administrar el espacio de nombres del sistema 
    - **Es llamado por**: **DataNode** mismo (periódicamente).
    - **Parámetros**:
      - `datanode_id` (string): El identificador de ese **DataNode**.
-     - `block_list` (list): Lista de los bloques almacenados en el **DataNode**.
+     - `block_list` (list): Lista de los ids bloques almacenados en el **DataNode**.
      - `checksum_list` (list): Lista de checksums de los bloques para verificar la integridad.
+     - **En forma de**
+
+        ```json
+        {"datanode_id": "datanode_id",
+         "blocks": [
+           {"block_id": "block1_id", "checksum":"block1_checksum"},
+           {"block_id": "block2_id", "checksum":"block2_checksum"},
+           ...
+        ]}
+        ```
    - **Retorno**:
      - Ninguno.
 
@@ -181,8 +194,7 @@ El **NameNode** no tiene funciones gRPC ejecutables por otros nodos. Toda la int
      - **DataNode** a través del endpoint `/replicate_block` (API REST), para ordenar la replicación de un bloque a otro nodo.
    - **Parámetros**:
      - `block_id` (string): El identificador del bloque.
-     - `source_datanode` (string): El **DataNode** que actualmente almacena el bloque.
-     - `target_datanode` (string): El **DataNode** al que se replicará el bloque.
+     - `target_datanode` (string): El **DataNode** al que se replicará el bloque, formato `ip:port`.
    - **Retorno recibido**:
      - JSON indicando éxito o error:
        ```json

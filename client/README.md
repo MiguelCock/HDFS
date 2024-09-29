@@ -55,8 +55,9 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
      - JSON con la lista de bloques y sus ubicaciones:
        ```json
        {"blocks": [
-         {"block_id": "block1", "datanode": {"ip": "ip1", "port": 5001}},
-         {"block_id": "block2", "datanode": {"ip": "ip2", "port": 5001}}
+         {"block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
+         ...
        ]}
        ```
     - **Retorno recibido POR CADA DATANODE**:
@@ -77,8 +78,9 @@ El **Client** no tiene funciones gRPC ejecutables por otros nodos, ya que su fun
      - JSON con la lista de bloques y sus ubicaciones:
        ```json
        {"blocks": [
-         {"block_id": "block1", "datanode": {"ip": "ip1", "port": 5001}},
-         {"block_id": "block2", "datanode": {"ip": "ip2", "port": 5001}}
+         {"block_id": "block1_id", "datanode": {"ip": "ip1", "port": 5001}},
+         {"block_id": "block2_id", "datanode": {"ip": "ip2", "port": 5001}},
+         ...
        ]}
        ```
    - **Retorno recibido POR CADA DATANODE**:
