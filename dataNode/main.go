@@ -9,7 +9,7 @@ import (
 func main() {
 	fmt.Print("STARTING SERVER")
 
-	dn := datanode.NewDataNode("bootstrap.json")
+	dn := DN.NewDataNode("bootstrap.json")
 
 	go func() {
 		if err := dn.StartRest(); err != nil {
