@@ -1,6 +1,6 @@
 {
-    "own_ip": "172.31.93.30",
+    "own_ip": "172.31.92.212",
     "own_port": 5000,
-    "namenode_ip": "172.31.93.31",
+    "namenode_ip": "172.31.94.180",
     "namenode_port": 5000
 }
