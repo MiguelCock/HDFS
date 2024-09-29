@@ -215,7 +215,8 @@ El **NameNode** no tiene funciones gRPC ejecutables por otros nodos. Toda la int
      - **DataNode** a través del endpoint `/replicate_block` (API REST), para ordenar la replicación de un bloque a otro nodo.
    - **Parámetros**:
      - `block_id` (string): El identificador del bloque.
-     - `target_datanode` (string): El **DataNode** al que se replicará el bloque, formato `ip:port`.
+     - `target_datanode_ip` (string): La IP del **DataNode** al que se replicará el bloque-
+     - `target_datanode_port` (int): El puerto gRPC del **DataNode** al que se replicará el bloque.
    - **Retorno recibido**:
      - JSON indicando éxito o error:
        ```json

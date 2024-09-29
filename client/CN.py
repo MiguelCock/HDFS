@@ -104,7 +104,7 @@ class Client:
                     file_data += block_data
                 else:
                     print(f"Failed to read block {block['block_id']} from all DataNodes")
-                    return  #si no se pudo leer un bloque, pailas, cancelamos la operación de lectura completa
+                    return  #si no se pudo leer un bloque, cancelamos la operación de lectura completa
 
             #aquí escribimos el archivo a disco
             with open(f'downloaded_{file_path}', 'wb') as f:
@@ -124,17 +124,25 @@ class Client:
         if response.status == "Bloque almacenado exitosamente":
             print(f"Block {block_id} sent successfully to {datanode_ip}:{datanode_port}")
         else:
-            print(f"Failed to send block {block_id} to {datanode_ip}:{datanode_port}")
+            try:
+                print(f"Failed to send block {block_id} to {datanode_ip}:{datanode_port}\nReason: {response.status}")
+            except:
+                print(f"Failed to send block {block_id} to {datanode_ip}:{datanode_port}")
 
     def read_block_from_datanode(self, datanode_ip, datanode_port, block_id):
         #usamos gRPC para leer un bloque de un DataNode
         channel = grpc.insecure_channel(f'{datanode_ip}:{datanode_port}')
         stub = datanode_service_pb2_grpc.DataNodeServiceStub(channel)
         response = stub.ReadBlock(datanode_service_pb2.ReadBlockRequest(block_id=block_id))
+        
+        #comprobamos si el bloque fue leído exitosamente
         if response.status == "Bloque leído exitosamente":
             return response.data
         else:
-            print(f"Failed to read block {block_id} from {datanode_ip}:{datanode_port}")
+            try:
+                print(f"Failed to read block {block_id} from {datanode_ip}:{datanode_port}\nReason: {response.status}")
+            except:
+                print(f"Failed to read block {block_id} from {datanode_ip}:{datanode_port}")
             return b''
 
     def delete_file(self, file_path):

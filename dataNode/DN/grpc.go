@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+    "fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,7 +29,7 @@ func (dn *DataNode) WriteBlock(ctx context.Context, req *DNgRPC.WriteBlockReques
 
 	os.WriteFile(blockID, data, 0644)
 
-	return &DNgRPC.WriteBlockResponse{Status: "Block stored successfully"}, nil
+	return &DNgRPC.WriteBlockResponse{Status: "Bloque almacenado exitosamente"}, nil
 }
 
 // -------------------- READ BLOCK --------------------
@@ -42,23 +43,23 @@ func (dn *DataNode) ReadBlock(ctx context.Context, req *DNgRPC.ReadBlockRequest)
 
 	data, _ := os.ReadFile(blockID)
 
-	return &DNgRPC.ReadBlockResponse{Data: data, Status: "Block read successfully"}, nil
+	return &DNgRPC.ReadBlockResponse{Data: data, Status: "Bloque leído exitosamente"}, nil
 }
 
 // -------------------- REPLICATE BLOCK --------------------
 func (dn *DataNode) replicateBlock(w http.ResponseWriter, r *http.Request) {
     blockID := r.URL.Query().Get("block_id")
-    targetDatanode := r.URL.Query().Get("target_datanode")
+    targetDatanodeIp := r.URL.Query().Get("target_datanode_ip")
+    targetDatanodePort := r.URL.Query().Get("target_datanode_port")
 
-    if blockID == "" || targetDatanode == "" {
-        http.Error(w, "Missing block_id or target_datanode", http.StatusBadRequest)
+    if blockID == "" || targetDatanodeIp == "" || targetDatanodePort == "" {
+        http.Error(w, "Missing block_id, target_datanode_ip or target_datanode_port", http.StatusBadRequest)
         return
     }
 
-	// DEPRECATED GRPC FUNCTIONS
-    // conn, err := grpc.Dial(targetDatanode, grpc.WithInsecure())
-    // conn, err := grpc.Dial(targetDatanode, grpc.WithTransportCredentials(insecure.NewCredentials()))
-    client, err := grpc.NewClient(targetDatanode, grpc.WithTransportCredentials(insecure.NewCredentials())) 
+    targetDatanode := fmt.Sprintf("%s:%s", targetDatanodeIp, targetDatanodePort)
+
+    client, err := grpc.NewClient(targetDatanode, grpc.WithTransportCredentials(insecure.NewCredentials()))
     if err != nil {
         log.Printf("Failed to create new gRPC client: %v", err)
         http.Error(w, "Failed to create new gRPC client", http.StatusInternalServerError)

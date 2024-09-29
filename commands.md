@@ -69,8 +69,11 @@ go build main.go
 
 ## IPs:  
 
-**client:** 
+**client1:** 
 172.31.90.113
+
+**client2:** 
+172.31.81.165
 
 **nameNode:** 
 172.31.94.180

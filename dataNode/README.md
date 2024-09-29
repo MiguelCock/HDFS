@@ -12,7 +12,8 @@ El **DataNode** es el responsable de almacenar los bloques de datos y replicarlo
    - **Es llamado por**: **NameNode**, cuando detecta que un bloque necesita replicarse.
    - **Parámetros**:
      - `block_id` (string): El identificador del bloque.
-     - `target_datanode` (string):El **DataNode** de destino para la replicación, formato `ip:port`.
+     - `target_datanode_ip` (string): La IP del **DataNode** al que se replicará el bloque-
+     - `target_datanode_port` (int): El puerto gRPC del **DataNode** al que se replicará el bloque.
    - **Retorno**:
      - JSON indicando éxito o error:
 

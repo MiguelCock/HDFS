@@ -86,7 +86,8 @@ class NameNode:
         url = f"http://{source_datanode['ip']}:{source_datanode['port']}/replicate_block"
         params = {
             'block_id': block_id,
-            'target_datanode': f"{target_datanode['ip']}:{target_datanode['port']+1}"
+            'target_datanode_ip': target_datanode['ip'],
+            'target_datanode_port': target_datanode['port']+1
         }
 
         try:
@@ -404,4 +405,4 @@ class NameNode:
 
     def start_server(self):
         #iniciamos el servidor API REST con Flask
-        self.app.run(host=self.own_ip, port=self.own_port, debug=True)
+        self.app.run(host=self.own_ip, port=self.own_port)
