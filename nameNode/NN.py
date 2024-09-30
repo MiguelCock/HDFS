@@ -91,7 +91,7 @@ class NameNode:
         filtered_datanodes_with_block = [{'ip': dn['ip'], 'port': dn['port']} for dn in datanodes_with_block]
 
         #elegimos un DataNode aleatorio que NO tenga este bloque
-        available_datanodes = [node for node in self.datanodes.values() if node not in filtered_datanodes_with_block]
+        available_datanodes = [node for node in self.datanodes.values() if {'ip': node['ip'], 'port': node['port']} not in filtered_datanodes_with_block]
         if not available_datanodes:
             print("No available DataNodes for replication.")
             return
