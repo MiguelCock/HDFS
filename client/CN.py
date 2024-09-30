@@ -216,12 +216,23 @@ class Client:
         
         if response.status_code == 200:
             data = response.json()
-            print('Directory contents:', ', '.join(data['contents']))
+            print('Directory contents:')
+            
+            #procesamos las rutas completas para mostrar solo los nombres relativos
+            for item in data['contents']:
+                #obtenemos solo la parte relativa del nombre
+                relative_path = item[len(directory_path):].strip('/')
+                #si el contenido es un directorio, mostramos con '/'
+                if item in self.filesystem and self.filesystem[item] == "directory":
+                    print(f"{relative_path}/")
+                else:
+                    print(relative_path)
         else:
             try:
                 print(response.json()['message'])
             except:
                 print('Directory listing failed')
+
 
     def change_directory(self, directory_path):
         #verificar si el directorio existe antes de cambiar

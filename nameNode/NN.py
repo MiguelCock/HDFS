@@ -5,6 +5,7 @@ import random
 import requests
 import threading
 import time
+import os
 
 class NameNode:
     def __init__(self, bootstrap_path):
@@ -272,7 +273,7 @@ class NameNode:
 
         @self.app.route('/create_directory', methods=['POST'])
         def create_directory():
-            #crear un directorio nuevo
+            #creamos un directorio nuevo en el sistema
             token = request.headers.get('Authorization')
             if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
@@ -283,16 +284,19 @@ class NameNode:
             if not path:
                 return jsonify({"message": "missing directory path"}), 400
 
+            #aseguramos que el directorio padre exista
+            parent_dir = os.path.dirname(path)
+            if parent_dir and parent_dir != "/" and parent_dir not in self.filesystem:
+                return jsonify({"message": "parent directory does not exist"}), 400
+
             if path in self.filesystem:
                 return jsonify({"message": "directory already exists"}), 400
 
-            #aseguramos que los directorios padre existen
-            parent_directory = '/'.join(path.strip('/').split('/')[:-1])
-            if parent_directory and parent_directory not in self.filesystem:
-                return jsonify({"message": "parent directory does not exist"}), 400
-
+            #si pasa las validaciones, creamos el directorio
             self.filesystem[path] = "directory"
+
             return jsonify({"message": "directory created successfully"}), 200
+
 
         @self.app.route('/delete_directory', methods=['DELETE'])
         def delete_directory():
