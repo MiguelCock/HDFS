@@ -299,18 +299,23 @@ Este script desplegará un menú donde podrás seleccionar el tipo de nodo que d
 - Client (Y su proceso de autenticación):  
 ![image](https://github.com/user-attachments/assets/d6305335-ad82-4691-831b-c3757840dfe5)
 
-- Datanode:
+- Datanode:  
 ![image](https://github.com/user-attachments/assets/662d9ccd-191a-4033-90f3-03c01564e64b)
 
 - Namenode:  
 ![image](https://github.com/user-attachments/assets/90a31c46-e735-4916-8dd7-14e4d25a69ad)
 
 - El cliente monta un archivo:  
-(shrek.txt pesa 150 KB, y el particionado de bloques está seteado en 50 KB)
+(shrek.txt pesa 150 KB, y el particionado de bloques está seteado en 50 KB)  
 ![image](https://github.com/user-attachments/assets/8a34d7cd-b1e1-452a-ad69-c48dbf4b3913)
 ![image](https://github.com/user-attachments/assets/cfd0c6f3-73fc-41fc-8f1c-9bf8a7ed9c93)
+![image](https://github.com/user-attachments/assets/23beca5c-a684-48fe-8b55-eba7fc99b38e)
 
+(El cliente logra enviar los archivos a los nodos desingados y enviados por nameNode)  
+![image](https://github.com/user-attachments/assets/e70bd1fc-313d-455d-ab24-2a0e8eebe2dd)  
 
+(Los bloques son guardados en el datanode)  
+![image](https://github.com/user-attachments/assets/35032ae9-b9e6-41c9-b73e-7298f344896c)
 
 ---
 
