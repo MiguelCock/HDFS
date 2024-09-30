@@ -86,6 +86,7 @@ class Client:
                 start_index = (block['block_index'] - 1) * block_size
                 end_index = min(start_index + block_size, size)
                 block_data = file_data[start_index:end_index]
+                print(f"Sending block {block['block_id']} to DataNode {block['datanodes'][0]['ip']}:{block['datanodes'][0]['port']+1}")
                 self.send_block_to_datanode(block['datanodes'][0]['ip'], block['datanodes'][0]['port']+1, block['block_id'], block_data)
         else:
             try:
