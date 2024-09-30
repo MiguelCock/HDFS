@@ -16,46 +16,58 @@ class NameNode:
         self.own_ip = config['own_ip']
         self.own_port = config['own_port']
         self.block_size = config['block_size']  #tamaño de bloque desde el bootstrap
-        self.heartbeat_interval = config['heartbeat_interval']  #intervalo de heartbeat desde el bootstrap
+        self.heartbeat_interval = config['heartbeat_interval']  #intervalo de heartbeat
         self.block_check_interval = config['block_check_interval']  #intervalo de verificación de bloques
-        self.replication_check_interval = config['replication_check_interval']  #intervalo para la verificación de replicación
+        self.replication_check_interval = config['replication_check_interval']  #verificación de replicación
 
-
-        self.filesystem = {}  #diccionario para gestionar archivos y directorios
+        self.filesystem = {}       #diccionario para gestionar archivos y directorios
         self.block_locations = {}  #diccionario para rastrear la ubicación de bloques
-        self.clients = {}  #diccionario para los clientes registrados
-        self.tokens = {}  #diccionario para los tokens de los clientes logeados en el sistema
-        self.datanodes = {}  #diccionario para los DataNodes registrados
+        self.clients = {}          #diccionario para los clientes registrados
+        self.tokens = {}           #diccionario para los tokens de los clientes
+        self.datanodes = {}        #diccionario para los DataNodes registrados (con TTL)
 
         #inicializamos las rutas del API REST
         self.define_routes()
 
-        #iniciamos el proceso de verificación de mínima replicación (dos DataNodes por bloque)
+        #iniciamos los hilos para manejar TTL y replicación
+        threading.Thread(target=self.decrease_ttl, daemon=True).start()
         threading.Thread(target=self.check_block_replication, daemon=True).start()
 
     def generate_user_token(self, username, password):
-        #concatenamos el nombre de usuario y la contraseña
+        #generamos un token para el usuario
         text_to_hash = f"{username}|{password}"
-        #calculamos el hash de 16 bits
         hash_object = hashlib.md5(text_to_hash.encode())
         return hash_object.hexdigest()[:16]
-    
+
     def generate_block_id(self, file_path, part_number):
-        #concatenamos la ruta completa con la parte correspondiente
+        #generamos un ID único para cada bloque
         text_to_hash = f"{file_path}.part{part_number}"
-        #calculamos el hash de 16 bits
         hash_object = hashlib.md5(text_to_hash.encode())
         return hash_object.hexdigest()[:16]
+
+    def decrease_ttl(self):
+        #cada 10 segundos, decrementamos el TTL de los DataNodes y eliminamos los que expiren
+        while True:
+            time.sleep(10)
+            for datanode_key, info in list(self.datanodes.items()):
+                info["TTL"] -= 1
+                if info["TTL"] <= 0:
+                    print(f"DataNode {datanode_key} removed due to TTL expiration.")
+                    #eliminamos el DataNode de los registros y de los bloques
+                    del self.datanodes[datanode_key]
+                    self.remove_datanode_from_blocks(datanode_key)
+
+    def remove_datanode_from_blocks(self, datanode_key):
+        #elimina un DataNode de todos los bloques en block_locations
+        for path, blocks in self.block_locations.items():
+            for block in blocks:
+                block['datanodes'] = [dn for dn in block['datanodes'] if f"{dn['ip']}:{dn['port']}" != datanode_key]
 
     def check_block_replication(self):
-        #este hilo se ejecuta periódicamente y revisa que cada bloque tenga al menos dos réplicas
+        #verificamos que cada bloque tenga al menos dos réplicas
         while True:
-            time.sleep(self.replication_check_interval)  #esperamos el tiempo puesto en el bootstrap
+            time.sleep(self.replication_check_interval)
             print("Checking block replication status...")
-
-            #DEBUG
-            print('block_locations:', self.block_locations)
-            #END DEBUG
 
             for path, blocks in self.block_locations.items():
                 for block in blocks:
@@ -69,20 +81,16 @@ class NameNode:
         if not datanodes_with_block:
             print(f"No DataNode found for block {block['block_id']}")
             return
-        
+
         #seleccionamos un DataNode que tenga el bloque
         source_datanode = random.choice(datanodes_with_block)
         block_id = block['block_id']
 
-        #quitando el atributo checksum y otros posibles que vengan en el futuro
-        filtered_datanodes_with_block = [{'ip':datanode['ip'], 'port':datanode['port']} for datanode in datanodes_with_block]
+        #filtramos los DataNodes que ya tienen el bloque
+        filtered_datanodes_with_block = [{'ip': dn['ip'], 'port': dn['port']} for dn in datanodes_with_block]
 
         #elegimos un DataNode aleatorio que NO tenga este bloque
-        available_datanodes = [
-            node for node in self.datanodes.values()
-            if node not in filtered_datanodes_with_block
-        ]
-
+        available_datanodes = [node for node in self.datanodes.values() if node not in filtered_datanodes_with_block]
         if not available_datanodes:
             print("No available DataNodes for replication.")
             return
@@ -94,29 +102,28 @@ class NameNode:
         params = {
             'block_id': block_id,
             'target_datanode_ip': target_datanode['ip'],
-            'target_datanode_port': target_datanode['port']+1
+            'target_datanode_port': target_datanode['port'] + 1
         }
 
-        print(f"Replicating block {block_id} from {source_datanode['ip']}:{source_datanode['port']} to {target_datanode['ip']}:{target_datanode['port']+1}...")
-
-        # DEBUG
-        print('datanodes_with_block:', datanodes_with_block)
-        print('self.datanodes:', self.datanodes)
-        print('available_datanodes:', available_datanodes)
-        # END DEBUG
+        print(f"Replicating block {block_id} from {source_datanode['ip']}:{source_datanode['port']} to {target_datanode['ip']}:{target_datanode['port'] + 1}...")
 
         try:
             response = requests.post(url, params=params)
             response_message = response.json().get('message', 'No message')
             if response.status_code == 200:
-                print(f"Block {block_id} successfully replicated from {source_datanode['ip']} to {target_datanode['ip']}. {response_message}")
-                #actualizamos las ubicaciones de los bloques
-                block['datanodes'].append(target_datanode)
+                print(f"Block {block_id} successfully replicated. {response_message}")
+                #actualizamos las ubicaciones de los bloques sin duplicar
+                if not any(dn['ip'] == target_datanode['ip'] and dn['port'] == target_datanode['port'] for dn in block['datanodes']):
+                    block['datanodes'].append({
+                        "ip": target_datanode['ip'],
+                        "port": target_datanode['port'],
+                        "TTL": 2
+                    })
             else:
                 print(f"Failed to replicate block {block_id}. {response_message}")
         except Exception as e:
             print(f"Error during replication: {e}")
-    
+
     def define_routes(self):
         #definimos las rutas de los endpoints
 
@@ -145,7 +152,7 @@ class NameNode:
 
             if username not in self.clients or self.clients[username] != password:
                 return jsonify({"message": "invalid credentials"}), 401
-            
+
             token = self.generate_user_token(username, password)
 
             if token in self.tokens:
@@ -153,7 +160,7 @@ class NameNode:
 
             self.tokens[token] = username
             return jsonify({"message": "login successful", "token": token, "block_size": self.block_size}), 200
-        
+
         @self.app.route('/logout', methods=['POST'])
         def logout():
             #cerramos la sesión de un cliente y eliminamos el token
@@ -188,17 +195,18 @@ class NameNode:
             for i in range(blocks_quantity):
                 #seleccionamos un DataNode aleatoriamente
                 selected_datanode = random.choice(list(self.datanodes.values()))
-                
-                #generamos el block_id utilizando el hash de la ruta del archivo concatenado con .partN
+
+                #generamos el block_id
                 block_id = self.generate_block_id(path, i + 1)
-                
+
                 block = {
                     "block_index": i + 1,
                     "block_id": block_id,
-                    "datanode": {
+                    "datanodes": [{
                         "ip": selected_datanode['ip'],
-                        "port": selected_datanode['port']
-                    }
+                        "port": selected_datanode['port'],
+                        "TTL": 2
+                    }]
                 }
                 blocks.append(block)
 
@@ -226,7 +234,7 @@ class NameNode:
             #obtenemos la lista de bloques del archivo
             blocks = self.filesystem[path]
 
-            #para cada bloque, contactamos a cada DataNode implicado y le pedimos que elimine el bloque
+            #para cada bloque, contactamos a cada DataNode y le pedimos que elimine el bloque
             for block in blocks:
                 for datanode in block['datanodes']:
                     datanode_ip = datanode['ip']
@@ -242,7 +250,7 @@ class NameNode:
                     except Exception as e:
                         print(f"Error contacting DataNode {datanode_ip}:{datanode_port}: {e}")
 
-            #eliminamos el archivo del sistema después de haber eliminado todos los bloques
+            #eliminamos el archivo del sistema
             del self.filesystem[path]
             del self.block_locations[path]
 
@@ -326,11 +334,10 @@ class NameNode:
                     {
                         "block_index": block['block_index'],
                         "block_id": block['block_id'],
-                        "datanodes": block.get("datanodes", [])  #así aseguramos que siempre haya una lista de datanodes, aún cuando nadie lo tenga (eso sería raro XD)
+                        "datanodes": block.get("datanodes", [])
                     } for block in blocks
                 ]
             }), 200
-
 
         @self.app.route('/register_datanode', methods=['POST'])
         def register_datanode():
@@ -342,9 +349,11 @@ class NameNode:
             if not datanode_ip or not datanode_port:
                 return jsonify({"message": "missing DataNode IP or port"}), 400
 
-            self.datanodes[f"{datanode_ip}:{datanode_port}"] = {
+            datanode_key = f"{datanode_ip}:{datanode_port}"
+            self.datanodes[datanode_key] = {
                 "ip": datanode_ip,
-                "port": datanode_port
+                "port": datanode_port,
+                "TTL": 2
             }
 
             return jsonify({
@@ -353,7 +362,7 @@ class NameNode:
                 "heartbeat_interval": self.heartbeat_interval,
                 "block_report_interval": self.block_check_interval
             }), 200
-        
+
         @self.app.route('/heartbeat', methods=['POST'])
         def heartbeat():
             #recibimos el heartbeat de un DataNode
@@ -368,15 +377,17 @@ class NameNode:
             if datanode_key not in self.datanodes:
                 return jsonify({"message": "DataNode not registered"}), 404
 
+            #restablecemos el TTL a 2 cuando recibimos un heartbeat
+            self.datanodes[datanode_key]["TTL"] = 2
             return jsonify({"message": "heartbeat received"}), 200
-        
+
         @self.app.route('/block_report', methods=['POST'])
         def block_report():
             #recibimos un reporte de bloques de un DataNode
             data = request.json
             datanode_ip = data.get('datanode_ip')
             datanode_port = data.get('datanode_port')
-            blocks = data.get('blocks', [])  #Esto garantiza que tengamos al menos una lista vacía
+            blocks = data.get('blocks', [])
 
             #verificación de los campos obligatorios
             if not datanode_ip or not datanode_port:
@@ -386,11 +397,28 @@ class NameNode:
             if datanode_key not in self.datanodes:
                 return jsonify({"message": "DataNode not registered"}), 404
 
-            #si no hay bloques reportados, retornamos un mensaje indicando que el reporte está vacío
-            if not blocks:
-                return jsonify({"message": "block report is empty"}), 200
+            #actualizamos el TTL del DataNode
+            self.datanodes[datanode_key]["TTL"] = 2
 
-            #procesamos los bloques enviados, si es que hay alguno
+            #obtener los IDs de bloques reportados
+            reported_block_ids = [block.get('block_id') for block in blocks]
+
+            #validamos cada bloque registrado en el NameNode
+            for path, block_list in self.block_locations.items():
+                for stored_block in block_list:
+                    block_id = stored_block['block_id']
+                    #si el DataNode no reporta un bloque que antes tenía, lo eliminamos de 'datanodes'
+                    if not any(bid == block_id for bid in reported_block_ids):
+                        stored_block['datanodes'] = [dn for dn in stored_block['datanodes'] if f"{dn['ip']}:{dn['port']}" != datanode_key]
+                    else:
+                        #si el checksum no coincide, eliminamos el bloque del DataNode
+                        reported_block = next((b for b in blocks if b['block_id'] == block_id), None)
+                        if reported_block and reported_block['checksum'] != stored_block.get('checksum'):
+                            print(f"Checksum mismatch for block {block_id} on DataNode {datanode_key}. Removing corrupt block.")
+                            self.delete_block_on_datanode(datanode_ip, datanode_port, block_id)
+                            stored_block['datanodes'] = [dn for dn in stored_block['datanodes'] if f"{dn['ip']}:{dn['port']}" != datanode_key]
+
+            #procesamos los bloques nuevos o actualizados en el 'block_report'
             for block in blocks:
                 block_id = block.get('block_id')
                 checksum = block.get('checksum')
@@ -404,20 +432,33 @@ class NameNode:
                 for path, block_list in self.block_locations.items():
                     for stored_block in block_list:
                         if stored_block['block_id'] == block_id:
-                            #Si el bloque ya tiene ubicaciones, agregamos el DataNode sin reemplazar las anteriores
-                            if "datanodes" not in stored_block:
-                                stored_block['datanodes'] = []
-                            stored_block['datanodes'].append({
-                                "ip": datanode_ip,
-                                "port": datanode_port,
-                                "checksum": checksum
-                            })
                             block_found = True
-                            break
+                            #verificamos que no se duplique el DataNode en los bloques
+                            if not any(dn['ip'] == datanode_ip and dn['port'] == datanode_port for dn in stored_block['datanodes']):
+                                stored_block['datanodes'].append({
+                                    "ip": datanode_ip,
+                                    "port": datanode_port,
+                                    "TTL": 2,
+                                    "checksum": checksum
+                                })
+                #si no se encontró el bloque, podría ser uno nuevo (caso especial)
+                if not block_found:
+                    print(f"Unknown block {block_id} reported by DataNode {datanode_key}. Ignoring.")
 
             #si no hay bloques, el ciclo for simplemente no hará nada, lo cual es correcto.
             return jsonify({"message": "block report received"}), 200
 
+    def delete_block_on_datanode(self, datanode_ip, datanode_port, block_id):
+        #solicitamos al DataNode que elimine el bloque corrupto
+        url = f"http://{datanode_ip}:{datanode_port}/delete_block"
+        try:
+            response = requests.delete(url, params={"block_id": block_id})
+            if response.status_code == 200:
+                print(f"Block {block_id} deleted from DataNode {datanode_ip}:{datanode_port}")
+            else:
+                print(f"Failed to delete block {block_id} from DataNode {datanode_ip}:{datanode_port}")
+        except Exception as e:
+            print(f"Error contacting DataNode {datanode_ip}:{datanode_port}: {e}")
 
     def start_server(self):
         #iniciamos el servidor API REST con Flask
