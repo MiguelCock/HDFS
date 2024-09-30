@@ -293,7 +293,24 @@ Este script desplegará un menú donde podrás seleccionar el tipo de nodo que d
 
 ## 8. Fotos de la ejecución del sistema:
 
-a
+- Instancias EC2:  
+![image](https://github.com/user-attachments/assets/c54a1da5-acd5-43a6-a2fa-aa8b48ae9bd1)
+
+- Client (Y su proceso de autenticación):  
+![image](https://github.com/user-attachments/assets/d6305335-ad82-4691-831b-c3757840dfe5)
+
+- Datanode:
+![image](https://github.com/user-attachments/assets/662d9ccd-191a-4033-90f3-03c01564e64b)
+
+- Namenode:  
+![image](https://github.com/user-attachments/assets/90a31c46-e735-4916-8dd7-14e4d25a69ad)
+
+- El cliente monta un archivo:  
+(shrek.txt pesa 150 KB, y el particionado de bloques está seteado en 50 KB)
+![image](https://github.com/user-attachments/assets/8a34d7cd-b1e1-452a-ad69-c48dbf4b3913)
+![image](https://github.com/user-attachments/assets/cfd0c6f3-73fc-41fc-8f1c-9bf8a7ed9c93)
+
+
 
 ---
 
