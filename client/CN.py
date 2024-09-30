@@ -1,3 +1,4 @@
+import os
 import requests
 import grpc
 import datanode_service_pb2
@@ -10,6 +11,17 @@ class Client:
         self.token = None
         self.block_size = None
         self.current_directory = "/client/"
+
+    def resolve_path(self, path):
+        #normaliza la ruta proporcionada con respecto al directorio actual.
+        if not path.startswith('/'):
+            #si la ruta es relativa, la combinamos con el directorio actual
+            path = os.path.join(self.current_directory, path)
+        
+        #normalizamos la ruta eliminando redundancias
+        path = os.path.normpath(path)
+        
+        return path
 
     def login(self, username, password):
         #llamamos al API REST del NameNode para iniciar sesión y obtener un token
@@ -57,6 +69,7 @@ class Client:
 
     def create_file(self, file_path, file_data):
         #solicitamos la creación de un archivo en el NameNode
+        file_path = self.resolve_path(file_path)
         headers = {'Authorization': f'{self.token}'}
         size = len(file_data)
         response = requests.post(f'http://{self.namenode_ip}:{self.namenode_port}/create_file', json={
@@ -82,6 +95,7 @@ class Client:
 
     def read_file(self, file_path):
         #llamamos al NameNode para obtener las ubicaciones de los bloques
+        file_path = self.resolve_path(file_path)
         headers = {'Authorization': f'{self.token}'}
         response = requests.get(f'http://{self.namenode_ip}:{self.namenode_port}/get_block_locations', params={
             'path': file_path
@@ -147,6 +161,7 @@ class Client:
 
     def delete_file(self, file_path):
         #llamamos al API REST para eliminar el archivo
+        file_path = self.resolve_path(file_path)
         headers = {'Authorization': f'{self.token}'}
         response = requests.delete(f'http://{self.namenode_ip}:{self.namenode_port}/delete_file', params={
             'path': file_path
@@ -161,6 +176,7 @@ class Client:
 
     def create_directory(self, directory_path):
         #llamamos al API REST para crear un directorio
+        directory_path = self.resolve_path(directory_path)
         headers = {'Authorization': f'{self.token}'}
         response = requests.post(f'http://{self.namenode_ip}:{self.namenode_port}/create_directory', json={
             'path': directory_path
@@ -175,6 +191,7 @@ class Client:
 
     def delete_directory(self, directory_path):
         #llamamos al API REST para eliminar un directorio
+        directory_path = self.resolve_path(directory_path)
         headers = {'Authorization': f'{self.token}'}
         response = requests.delete(f'http://{self.namenode_ip}:{self.namenode_port}/delete_directory', params={
             'path': directory_path
@@ -189,6 +206,7 @@ class Client:
 
     def list_directory(self, directory_path):
         #llamamos al API REST para listar los archivos dentro de un directorio
+        directory_path = self.resolve_path(directory_path)
         headers = {'Authorization': f'{self.token}'}
         response = requests.get(f'http://{self.namenode_ip}:{self.namenode_port}/list_directory', params={
             'path': directory_path

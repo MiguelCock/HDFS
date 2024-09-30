@@ -90,9 +90,10 @@ class FileSystemClientApp:
                         self.client.delete_directory(command[1])
 
                 elif action == 'ls':
-                    if len(command) != 2:
-                        print('Usage: ls <directory_path>')
-                    else:
+                    if len(command) == 1:
+                        #si no se proporciona una ruta, listamos el directorio actual (es lo más usado)
+                        self.client.list_directory(self.client.current_directory)
+                    elif len(command) == 2:
                         self.client.list_directory(command[1])
 
                 elif action == 'cd':
