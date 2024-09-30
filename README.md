@@ -299,6 +299,9 @@ Este script desplegará un menú donde podrás seleccionar el tipo de nodo que d
 - Client (Y su proceso de autenticación):  
 ![image](https://github.com/user-attachments/assets/d6305335-ad82-4691-831b-c3757840dfe5)
 
+- Funciones de cliente:  
+![image](https://github.com/user-attachments/assets/1ea202ef-1ba2-4d89-b74f-45a37759b393)
+
 - Datanode:  
 ![image](https://github.com/user-attachments/assets/662d9ccd-191a-4033-90f3-03c01564e64b)
 
@@ -310,12 +313,22 @@ Este script desplegará un menú donde podrás seleccionar el tipo de nodo que d
 ![image](https://github.com/user-attachments/assets/8a34d7cd-b1e1-452a-ad69-c48dbf4b3913)
 ![image](https://github.com/user-attachments/assets/cfd0c6f3-73fc-41fc-8f1c-9bf8a7ed9c93)
 ![image](https://github.com/user-attachments/assets/23beca5c-a684-48fe-8b55-eba7fc99b38e)
+![image](https://github.com/user-attachments/assets/85d9ec15-3b8b-42a8-bc34-5a5209227c2a)
 
-(El cliente logra enviar los archivos a los nodos desingados y enviados por nameNode)  
-![image](https://github.com/user-attachments/assets/e70bd1fc-313d-455d-ab24-2a0e8eebe2dd)  
+- Los bloques son guardados en los datanodes designados:  
+![image](https://github.com/user-attachments/assets/5f816b96-6f19-4580-9d9e-b044bd1a50ae)  
+Nótese que fue replicado también, esto por orden del namenode:  
+![image](https://github.com/user-attachments/assets/4b645686-c88e-4bb8-94b8-fc048e51b287)
 
-(Los bloques son guardados en el datanode)  
-![image](https://github.com/user-attachments/assets/35032ae9-b9e6-41c9-b73e-7298f344896c)
+- El mismo usuario descargando el archivo desde un cliente diferente:  
+![image](https://github.com/user-attachments/assets/1c0a9f7f-3de7-4ca0-ab1d-f96d898fe2a4)  
+Veamos uno de los nodos que debieron ser contactados  
+![image](https://github.com/user-attachments/assets/ce9359d4-2018-4dd7-82c7-b3383141dfd0)  
+Y efectivamente fue descargado y rearmado  
+![image](https://github.com/user-attachments/assets/2b202f67-d00a-4ac4-9a0e-2bb84b8450ad)
+
+- Replicación de bloques al morir un nodo:  
+![image](https://github.com/user-attachments/assets/41c29369-ae01-42db-a4d1-c235e4b22b0c)
 
 ---
 
