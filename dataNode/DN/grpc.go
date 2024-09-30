@@ -27,8 +27,13 @@ func (dn *DataNode) WriteBlock(ctx context.Context, req *DNgRPC.WriteBlockReques
 
 	dn.Blocks[blockID] = BlockMetadata{Checksum: string(hashres), Size: int64(len(data))}
 
-	os.WriteFile(blockID, data, 0644)
+	err := os.WriteFile(blockID, data, 0644)
+	if err != nil {
+		log.Printf("Error escribiendo bloque %s en disco: %v", blockID, err)
+		return &DNgRPC.WriteBlockResponse{Status: "Error al almacenar el bloque en disco"}, err
+	}
 
+	log.Printf("Bloque %s escrito en disco exitosamente", blockID)
 	return &DNgRPC.WriteBlockResponse{Status: "Bloque almacenado exitosamente"}, nil
 }
 
@@ -38,11 +43,17 @@ func (dn *DataNode) ReadBlock(ctx context.Context, req *DNgRPC.ReadBlockRequest)
 
 	_, exists := dn.Blocks[blockID]
 	if !exists {
-		return &DNgRPC.ReadBlockResponse{Status: "Block not found"}, nil
+		log.Printf("Bloque %s no encontrado", blockID)
+		return &DNgRPC.ReadBlockResponse{Status: "Bloque no encontrado"}, nil
 	}
 
-	data, _ := os.ReadFile(blockID)
+	data, err := os.ReadFile(blockID)
+	if err != nil {
+		log.Printf("Error leyendo bloque %s desde el disco: %v", blockID, err)
+		return &DNgRPC.ReadBlockResponse{Status: "Error al leer el bloque desde el disco"}, err
+	}
 
+	log.Printf("Bloque %s enviado para lectura", blockID)
 	return &DNgRPC.ReadBlockResponse{Data: data, Status: "Bloque leído exitosamente"}, nil
 }
 
