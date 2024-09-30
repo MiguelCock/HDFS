@@ -428,13 +428,13 @@ class NameNode:
                     #si el DataNode no reporta un bloque que antes tenía, lo eliminamos de 'datanodes'
                     if not any(bid == block_id for bid in reported_block_ids):
                         stored_block['datanodes'] = [dn for dn in stored_block['datanodes'] if f"{dn['ip']}:{dn['port']}" != datanode_key]
-                    else:
-                        #si el checksum no coincide, eliminamos el bloque del DataNode
-                        reported_block = next((b for b in blocks if b['block_id'] == block_id), None)
-                        if reported_block and reported_block['checksum'] != stored_block.get('checksum'):
-                            print(f"Checksum mismatch for block {block_id} on DataNode {datanode_key}. Removing corrupt block.")
-                            self.delete_block_on_datanode(datanode_ip, datanode_port, block_id)
-                            stored_block['datanodes'] = [dn for dn in stored_block['datanodes'] if f"{dn['ip']}:{dn['port']}" != datanode_key]
+                    #else:
+                    #    #si el checksum no coincide, eliminamos el bloque del DataNode
+                    #    reported_block = next((b for b in blocks if b['block_id'] == block_id), None)
+                    #    if reported_block and reported_block['checksum'] != stored_block.get('checksum'):
+                    #        print(f"Checksum mismatch for block {block_id} on DataNode {datanode_key}. Removing corrupt block.")
+                    #        self.delete_block_on_datanode(datanode_ip, datanode_port, block_id)
+                    #        stored_block['datanodes'] = [dn for dn in stored_block['datanodes'] if f"{dn['ip']}:{dn['port']}" != datanode_key]
 
             #procesamos los bloques nuevos o actualizados en el 'block_report'
             for block in blocks:

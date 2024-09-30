@@ -97,7 +97,7 @@ func (dn *DataNode) replicateBlock(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    log.Printf("WriteBlock response: %v", writeRes.Status)
+    log.Printf("WriteBlock (replication at DataNode: %s) response: %s", targetDatanode, writeRes.Status)
 
     response := Response{Status: "Bloque replicado exitosamente"}
     w.Header().Set("Content-Type", "application/json")

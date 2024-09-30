@@ -118,6 +118,8 @@ func (dn *DataNode) deleteBlock(w http.ResponseWriter, r *http.Request) {
 
 	delete(dn.Blocks, blockID)
 
+	log.Printf("Bloque %s eliminado exitosamente", blockID)
+
 	w.WriteHeader(http.StatusOK)
 	response := Response{Status: "Bloque eliminado exitosamente"}
 	w.Header().Set("Content-Type", "application/json")
