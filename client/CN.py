@@ -210,6 +210,7 @@ class Client:
         #llamamos al API REST para listar los archivos dentro de un directorio
         directory_path = self.resolve_path(directory_path)
         headers = {'Authorization': f'{self.token}'}
+        
         response = requests.get(f'http://{self.namenode_ip}:{self.namenode_port}/list_directory', params={
             'path': directory_path
         }, headers=headers)
@@ -222,8 +223,8 @@ class Client:
             for item in data['contents']:
                 #obtenemos solo la parte relativa del nombre
                 relative_path = item[len(directory_path):].strip('/')
-                #si el contenido es un directorio, mostramos con '/'
-                if item in self.filesystem and self.filesystem[item] == "directory":
+                #mostramos directorios con '/'
+                if item.endswith('/'):
                     print(f"{relative_path}/")
                 else:
                     print(relative_path)
@@ -232,7 +233,6 @@ class Client:
                 print(response.json()['message'])
             except:
                 print('Directory listing failed')
-
 
     def change_directory(self, directory_path):
         #verificar si el directorio existe antes de cambiar
