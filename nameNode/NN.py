@@ -22,6 +22,7 @@ class NameNode:
 
         self.filesystem = {}       #diccionario para gestionar archivos y directorios
         self.block_locations = {}  #diccionario para rastrear la ubicación de bloques
+        self.file_owners = {}      #diccionario para rastrear el dueño de cada archivo
         self.clients = {}          #diccionario para los clientes registrados
         self.tokens = {}           #diccionario para los tokens de los clientes
         self.datanodes = {}        #diccionario para los DataNodes registrados (con TTL)
@@ -188,6 +189,8 @@ class NameNode:
             if path in self.filesystem:
                 return jsonify({"message": "file already exists"}), 400
 
+            owner = self.tokens[token]  #obtenemos el dueño del archivo
+
             #calculamos la cantidad de bloques
             blocks_quantity = (size // self.block_size) + (1 if size % self.block_size != 0 else 0)
             blocks = []
@@ -212,6 +215,7 @@ class NameNode:
 
             #almacenamos la información del archivo
             self.filesystem[path] = blocks
+            self.file_owners[path] = owner
             self.block_locations[path] = blocks
 
             return jsonify({"blocks_quantity": blocks_quantity, "blocks": blocks}), 200
@@ -230,6 +234,10 @@ class NameNode:
 
             if path not in self.filesystem:
                 return jsonify({"message": "file not found"}), 404
+
+            owner = self.file_owners.get(path)
+            if owner != self.tokens[token]:
+                return jsonify({"message": "forbidden, only the owner can delete this file"}), 403
 
             #obtenemos la lista de bloques del archivo
             blocks = self.filesystem[path]
@@ -253,6 +261,7 @@ class NameNode:
             #eliminamos el archivo del sistema
             del self.filesystem[path]
             del self.block_locations[path]
+            del self.file_owners[path]
 
             return jsonify({"message": "file deleted successfully"}), 200
 
@@ -326,6 +335,10 @@ class NameNode:
 
             if path not in self.block_locations:
                 return jsonify({"message": "file not found"}), 404
+
+            owner = self.file_owners.get(path)
+            if owner != self.tokens[token]:
+                return jsonify({"message": "forbidden, only the owner can access this file"}), 403
 
             blocks = self.block_locations[path]
             return jsonify({
