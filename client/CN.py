@@ -213,9 +213,10 @@ class Client:
         response = requests.get(f'http://{self.namenode_ip}:{self.namenode_port}/list_directory', params={
             'path': directory_path
         }, headers=headers)
+        
         if response.status_code == 200:
             data = response.json()
-            print('Directory contents:', data['contents'])
+            print('Directory contents:', ', '.join(data['contents']))
         else:
             try:
                 print(response.json()['message'])
@@ -223,26 +224,23 @@ class Client:
                 print('Directory listing failed')
 
     def change_directory(self, directory_path):
-        #verificamos si directory_path es una cadena vacía o contiene solo espacios en blanco
-        if not directory_path.strip():
-            print("Invalid directory path")
-            return
+        #verificar si el directorio existe antes de cambiar
+        directory_path = self.resolve_path(directory_path)
+        headers = {'Authorization': f'{self.token}'}
+        response = requests.get(f'http://{self.namenode_ip}:{self.namenode_port}/list_directory', params={
+            'path': directory_path
+        }, headers=headers)
 
-        #normalizamos directory_path eliminando barras diagonales redundantes
-        directory_path = directory_path.strip('/')
-
-        #cambiamos el directorio localmente sin llamar al NameNode
-        if directory_path == '..':
-            if self.current_directory != '/':
-                self.current_directory = '/'.join(self.current_directory.strip('/').split('/')[:-1])
-                if self.current_directory == '':
-                    self.current_directory = '/'
-                else:
-                    self.current_directory = '/' + self.current_directory + '/'
-        else:
-            if self.current_directory == '/':
-                self.current_directory = '/' + directory_path + '/'
+        if response.status_code == 200:
+            if directory_path == '..':
+                if self.current_directory != '/':
+                    self.current_directory = '/'.join(self.current_directory.strip('/').split('/')[:-1])
+                    if self.current_directory == '':
+                        self.current_directory = '/'
+                    else:
+                        self.current_directory = '/' + self.current_directory + '/'
             else:
-                self.current_directory += directory_path + '/'
-
-        print(f'Changed directory to {self.current_directory}')
+                self.current_directory = directory_path + '/' if not directory_path.endswith('/') else directory_path
+            print(f'Changed directory to {self.current_directory}')
+        else:
+            print('Directory not found')
