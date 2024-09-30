@@ -106,7 +106,7 @@ class NameNode:
             'target_datanode_port': target_datanode['port'] + 1
         }
 
-        print(f"Replicating block {block_id} from {source_datanode['ip']}:{source_datanode['port']} to {target_datanode['ip']}:{target_datanode['port'] + 1}...")
+        print(f"Replicating block {block_id} from {source_datanode['ip']} to {target_datanode['ip']}...")
 
         try:
             response = requests.post(url, params=params)

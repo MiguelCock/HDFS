@@ -122,7 +122,8 @@ class Client:
                     return  #si no se pudo leer un bloque, cancelamos la operación de lectura completa
 
             #aquí escribimos el archivo a disco
-            with open(f'downloaded_{file_path}', 'wb') as f:
+            file_name = file_path.split('/')[-1]
+            with open(f'downloaded_{file_name}', 'wb') as f:
                 f.write(file_data)
             print('File downloaded successfully')
         else:
