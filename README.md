@@ -14,6 +14,11 @@ Alvaro Enrique Ospina SanJuan, aeospinas@eafit.edu.co
 
 Este proyecto implementa un sistema de archivos distribuidos minimalista basado en bloques, inspirado en sistemas como GFS y HDFS. Utiliza una arquitectura compuesta por clientes, un NameNode y DataNodes, donde los archivos son divididos en bloques y distribuidos entre los DataNodes. El NameNode se encarga de la administración de metadatos, mientras que los clientes interactúan con él para obtener información sobre los bloques y transferir los datos a los DataNodes usando gRPC.
 
+> Una **descripción de las funciones específicas** de cada tipo de nodo puede ser encontrada en el README.md de su respectiva carpeta, incluye sus parámetros, tipos de retorno, quienes la invocan, a quiénes invoca, por qué medios, y el formato de la request y el retorno. *(Nos fué muy útil a la hora de organizarnos en equipo)*  
+> - [Client](https://github.com/MiguelCock/HDFS/blob/main/client/README.md)
+> - [NameNode](https://github.com/MiguelCock/HDFS/blob/main/nameNode/README.md)
+> - [DataNode](https://github.com/MiguelCock/HDFS/blob/main/dataNode/README.md)
+
 ### 1.1. Aspectos cumplidos o desarrollados:
 
 - Implementación de un sistema de archivos distribuido con separación de metadatos y almacenamiento de bloques.
@@ -22,12 +27,14 @@ Este proyecto implementa un sistema de archivos distribuidos minimalista basado 
 - Clientes que interactúan con el sistema a través de una interfaz de comandos, similar a un shell, permitiendo realizar operaciones de archivos y directorios.
 - Los bloques son transferidos a los DataNodes utilizando gRPC, mientras que los metadatos se gestionan mediante API REST.
 - Implementación de heartbeat y block reports para asegurar la disponibilidad de los DataNodes y garantizar la consistencia de los bloques.
+- Resiliencia ante fallos de DataNodes. Si un DataNode falla, las réplicas de sus bloques son replicadas en otros nodos disponibles.
+- Autenticación básica de los clientes mediante registro y logín, y un posterior token de acceso que se envía con cada request.
 
 ### 1.2. Aspectos NO cumplidos:
 
 - No se implementó una solución para la recuperación automática de datos en caso de fallo completo del NameNode (no se implementó NameNode secundario).
 - No se implementaron capas de seguridad avanzadas (como autenticación robusta o encriptación de datos).
-- No se ha probado la solución en redes de gran escala con un número significativo de nodos y archivos.
+- No se ha probado la solución en redes de gran escala con un número significativo de nodos y archivos, o archivos de gran tamaño (GB o TB).
   
 ---
 
