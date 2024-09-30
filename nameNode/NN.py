@@ -413,6 +413,11 @@ class NameNode:
             #actualizamos el TTL del DataNode
             self.datanodes[datanode_key]["TTL"] = 2
 
+            #si el reporte no contiene bloques, devolvemos una respuesta adecuada
+            if not blocks:
+                print(f"No blocks reported by DataNode {datanode_key}.")
+                return jsonify({"message": "No blocks to report"}), 200
+
             #obtener los IDs de bloques reportados
             reported_block_ids = [block.get('block_id') for block in blocks]
 

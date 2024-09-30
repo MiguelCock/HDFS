@@ -99,5 +99,7 @@ git pull
 git merge esteban
 git push
 git checkout esteban
+git merge main
+git push
 
 ```
