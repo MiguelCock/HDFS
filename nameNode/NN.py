@@ -142,6 +142,11 @@ class NameNode:
                 return jsonify({"message": "client already registered"}), 400
 
             self.clients[username] = password
+
+            #crear las rutas por defecto
+            self.filesystem[f'/'] = "directory"
+            self.filesystem[f'/client'] = "directory"
+
             return jsonify({"message": "client registered successfully"}), 200
 
         @self.app.route('/login', methods=['POST'])
@@ -267,7 +272,7 @@ class NameNode:
 
         @self.app.route('/create_directory', methods=['POST'])
         def create_directory():
-            #creamos un directorio nuevo en el sistema
+            #crear un directorio nuevo
             token = request.headers.get('Authorization')
             if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
@@ -281,13 +286,17 @@ class NameNode:
             if path in self.filesystem:
                 return jsonify({"message": "directory already exists"}), 400
 
-            self.filesystem[path] = "directory"
+            #aseguramos que los directorios padre existen
+            parent_directory = '/'.join(path.strip('/').split('/')[:-1])
+            if parent_directory and parent_directory not in self.filesystem:
+                return jsonify({"message": "parent directory does not exist"}), 400
 
+            self.filesystem[path] = "directory"
             return jsonify({"message": "directory created successfully"}), 200
 
         @self.app.route('/delete_directory', methods=['DELETE'])
         def delete_directory():
-            #eliminamos un directorio del sistema
+            #eliminar un directorio si está vacío
             token = request.headers.get('Authorization')
             if token not in self.tokens:
                 return jsonify({"message": "unauthorized"}), 401
@@ -300,8 +309,15 @@ class NameNode:
             if path not in self.filesystem or self.filesystem[path] != "directory":
                 return jsonify({"message": "directory not found"}), 404
 
+            #comprobamos que el directorio está vacío
+            path_with_slash = path if path.endswith('/') else path + '/'
+            for key in self.filesystem.keys():
+                if key.startswith(path_with_slash):
+                    return jsonify({"message": "directory not empty"}), 400
+
             del self.filesystem[path]
             return jsonify({"message": "directory deleted successfully"}), 200
+
 
         @self.app.route('/list_directory', methods=['GET'])
         def list_directory():
